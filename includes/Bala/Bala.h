@@ -49,8 +49,19 @@ public:
 	float getAngle() { return angle; };
 	int16_t getSpeedL() { return speedL; };
 	int16_t getSpeedR() { return speedR; };
+	float getParaK(uint8_t idx)
+	{
+		switch(idx)
+		{
+		case 0: return Balance_Kp;
+		case 1: return Balance_Kd;
+		case 2: return Velocity_Kp;
+		case 3: return Velocity_Kd;
+		default: return 0; 
+		}		
+	}
 
-	void setBalaK(uint8_t idx, float val) 
+	void setParaK(uint8_t idx, float val) 
 	{
 		switch(idx)
 		{

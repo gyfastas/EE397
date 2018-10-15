@@ -3,7 +3,7 @@
 volatile int16_t Velocity_L, Velocity_R = 0;   // encoder data of wheels
 
 /*------------------------------ ISR -----------------------------------*/
-void READ_ENCODER_L() 
+void IRAM_ATTR READ_ENCODER_L() 
 {
   if (digitalRead(ENCODER_L) == LOW) 
   {     // if falling edge ...
@@ -17,7 +17,7 @@ void READ_ENCODER_L()
   }
 }
 
-void READ_ENCODER_R() 
+void IRAM_ATTR READ_ENCODER_R() 
 {
   if (digitalRead(ENCODER_R) == LOW) 
   {     // if falling edge ...
