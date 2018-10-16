@@ -26,7 +26,7 @@ private:
 	int16_t speedL, speedR;
 
 	float Balance_Kp, Balance_Kd;
-	float Velocity_Kp, Velocity_Kd;
+	float Velocity_Kp, Velocity_Ki, Velocity_Kd;
 
 	int16_t Motor1, Motor2;
 
@@ -56,7 +56,8 @@ public:
 		case 0: return Balance_Kp;
 		case 1: return Balance_Kd;
 		case 2: return Velocity_Kp;
-		case 3: return Velocity_Kd;
+		case 3: return Velocity_Ki;
+		case 4: return Velocity_Kd;
 		default: return 0; 
 		}		
 	}
@@ -68,7 +69,8 @@ public:
 		case 0: Balance_Kp = val; break;
 		case 1: Balance_Kd = val; break;
 		case 2: Velocity_Kp = val; break;
-		case 3: Velocity_Kd = val; break;
+		case 3: Velocity_Ki = val; break;
+		case 4: Velocity_Kd = val; break;
 		default: break;
 		}
 	}

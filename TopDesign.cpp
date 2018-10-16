@@ -6,7 +6,7 @@
 #include <TB6612FNG.h>
 #include <Bala.h>
 
-#define EEPROM_SIZE 10
+#define EEPROM_SIZE 5
 #define EEPROM_FLAG 0x02
 
 #define STANDBY 15
@@ -31,10 +31,26 @@ KalmanFilter kf;
 Tb6612fng motorsDriver(STANDBY, MOTORL_IN1, MOTORL_IN2, PWML, MOTORR_IN1, MOTORR_IN2, PWMR);
 Bala myBala(mpu, kf, motorsDriver, Wire);
 
+template <class T> uint8_t EEPROM_write(uint8_t addr, const T& value)
+{
+   const byte* p = (const byte*)(const void*)&value;
+   for (uint8_t i = 0; i < sizeof(value); i++)
+       EEPROM.write(addr++, *p++);
+   return addr;
+}
+
+template <class T> uint8_t EEPROM_read(uint8_t addr, T& value)
+{
+   byte* p = (byte*)(void*)&value;
+   for (uint8_t i = 0; i < sizeof(value); i++)
+       *p++ = EEPROM.read(addr++);
+   return addr;
+}
+
 uint8_t initEEPROM(Bala &b)
 {
   Serial.println("Start EEPROM...");
-  if (!EEPROM.begin(EEPROM_SIZE))
+  if (!EEPROM.begin(2 + EEPROM_SIZE * sizeof(float)))
   {
     Serial.println("Failed to initialise EEPROM");
     return 1;
@@ -42,19 +58,22 @@ uint8_t initEEPROM(Bala &b)
   if (byte(EEPROM.read(0)) == EEPROM_FLAG && byte(EEPROM.read(1)) == EEPROM_FLAG)
   {
     Serial.println("Read PID parameters from EEPROM ...");
-    for (uint8_t i = 1; i < EEPROM_SIZE / 2; ++i)
+    float val;
+    uint8_t addr = 2;
+    for (uint8_t i = 0; i < EEPROM_SIZE; ++i)
     {
-      b.setParaK(i - 1, ((float)((uint16_t)EEPROM.read(i << 1)) + (float)(((uint16_t)EEPROM.read((i << 1) + 1)) / 100.0)));  
+      addr = EEPROM_read(addr, val);
+      b.setParaK(i, val);
     }      
   }
   else
   {
     Serial.println("First time to use EEPROM ... ");
     EEPROM.write(0, EEPROM_FLAG); EEPROM.write(1, EEPROM_FLAG);
-    for (uint8_t i = 1; i < EEPROM_SIZE / 2; ++i)
+    uint8_t addr = 2;
+    for (uint8_t i = 0; i < EEPROM_SIZE; ++i)
     {
-      EEPROM.write((i << 1), byte((uint16_t)b.getParaK(i - 1)));
-      EEPROM.write((i << 1) + 1, byte((uint16_t)(b.getParaK(i - 1) * 100) % 100));    
+      addr = EEPROM_write(addr, b.getParaK(i));   
     }  
     EEPROM.commit();
   }
@@ -64,11 +83,11 @@ uint8_t initEEPROM(Bala &b)
 void updateEEPROM(Bala &b)
 {
   Serial.println("Update EEPROM ... ");
-  for (uint8_t i = 1; i < EEPROM_SIZE / 2; ++i)
+  uint8_t addr = 2;
+  for (uint8_t i = 0; i < EEPROM_SIZE; ++i)
   {
-    EEPROM.write((i << 1), byte((uint16_t)b.getParaK(i - 1)));
-    EEPROM.write((i << 1) + 1, byte((uint16_t)(b.getParaK(i - 1) * 100) % 100));     
-  }   
+    addr = EEPROM_write(addr, b.getParaK(i));   
+  }  
   EEPROM.commit();
 }
 
@@ -140,11 +159,11 @@ void onWiFi()
   Serial.print(cmd);
   if (cmd == String("#"))
   {
-    sprintf(info, "Kp_B: %d:%.2d\r\nKd_B: %d:%.2d\r\nKp_V: %d:%.2d\r\nKd_V: %d:%.2d\r\n", 
-      (uint16_t)myBala.getParaK(0), (uint16_t)(myBala.getParaK(0) * 100) % 100,
-      (uint16_t)myBala.getParaK(1), (uint16_t)(myBala.getParaK(1) * 100) % 100,
-      (uint16_t)myBala.getParaK(2), (uint16_t)(myBala.getParaK(2) * 100) % 100,
-      (uint16_t)myBala.getParaK(3), (uint16_t)(myBala.getParaK(3) * 100) % 100);
+    sprintf(info, "Kp_B: %d:%.4d\r\nKd_B: %d:%.4d\r\nKp_V: %d:%.4d\r\nKd_V: %d:%.4d\r\n", 
+      (uint32_t)myBala.getParaK(0), (uint32_t)(myBala.getParaK(0) * 10000) % 10000,
+      (uint32_t)myBala.getParaK(1), (uint32_t)(myBala.getParaK(1) * 10000) % 10000,
+      (uint32_t)myBala.getParaK(2), (uint32_t)(myBala.getParaK(2) * 10000) % 10000,
+      (uint32_t)myBala.getParaK(3), (uint32_t)(myBala.getParaK(3) * 10000) % 10000);
     Serial.println(myBala.getParaK(0));
     Serial.println(myBala.getParaK(1));
     Serial.println(myBala.getParaK(2));

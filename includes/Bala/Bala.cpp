@@ -5,30 +5,30 @@ volatile int16_t Velocity_L, Velocity_R = 0;   // encoder data of wheels
 /*------------------------------ ISR -----------------------------------*/
 void IRAM_ATTR READ_ENCODER_L() 
 {
-  if (digitalRead(ENCODER_L) == LOW) 
-  {     // if falling edge ...
-    if (digitalRead(DIRECTION_L) == LOW)      Velocity_L--;
-    else      Velocity_L++;
-  }
-  else 
-  {     // if rising edge ...
-    if (digitalRead(DIRECTION_L) == LOW)      Velocity_L++;
-    else     Velocity_L--;
-  }
+	if (digitalRead(ENCODER_L) == LOW) 
+	{     // if falling edge ...
+		if (digitalRead(DIRECTION_L) == LOW)      Velocity_L--;
+		else      Velocity_L++;
+	}
+	else 
+	{     // if rising edge ...
+		if (digitalRead(DIRECTION_L) == LOW)      Velocity_L++;
+		else     Velocity_L--;
+	}
 }
 
 void IRAM_ATTR READ_ENCODER_R() 
 {
-  if (digitalRead(ENCODER_R) == LOW) 
-  {     // if falling edge ...
-    if (digitalRead(DIRECTION_R) == LOW)      Velocity_R++;
-    else      Velocity_R--;
-  }
-  else 
-  {     // if rising edge ...
-    if (digitalRead(DIRECTION_R) == LOW)      Velocity_R--;
-    else     Velocity_R++;
-  }
+	if (digitalRead(ENCODER_R) == LOW) 
+	{     // if falling edge ...
+		if (digitalRead(DIRECTION_R) == LOW)      Velocity_R++;
+		else      Velocity_R--;
+	}
+	else 
+	{     // if rising edge ...
+		if (digitalRead(DIRECTION_R) == LOW)      Velocity_R--;
+		else     Velocity_R++;
+	}
 }
 /*----------------------------------------------------------------------*/
 
@@ -39,10 +39,11 @@ Bala::Bala(MPU6050 &m, KalmanFilter &kf, Tb6612fng &tb, TwoWire &w)
 	this->mpu = &m;
 	this->filter = &kf;
 
-	this->Balance_Kp = 32.0;
-	this->Balance_Kd = 2.0;
-	this->Velocity_Kp = 10.0;
-  this->Velocity_Kd = 0;
+	this->Balance_Kp = 8.0;
+	this->Balance_Kd = 0.02;
+	this->Velocity_Kp = 3.0;
+	this->Velocity_Ki = 0.015;
+	this->Velocity_Kd = 0;
 }
 
 void Bala::_constrain(int16_t &val, int16_t low, int16_t high)
@@ -80,12 +81,14 @@ int16_t Bala::balance()
 int16_t Bala::velocity(int16_t target)
 {
 	static float Encoder, Encoder_last;
-  static int16_t Encoder_Diff;
+	static int16_t Encoder_Int, Encoder_Diff;
 	int16_t Velocity;
 	Encoder = 0.7 * Encoder + 0.3 * ((this->speedL + this->speedR) - target);	 // apply first-order low pass filter 
-  Encoder_Diff = Encoder - Encoder_last;                                     // differential
-  Encoder_last = Encoder;
-	Velocity = this->Velocity_Kp * Encoder + this->Velocity_Kd * Encoder_Diff;
+	Encoder_Int += Encoder;													     // integrate
+	this->_constrain(Encoder_Int, -3000, +3000);
+	Encoder_Diff = Encoder - Encoder_last;                                       // differential
+	Encoder_last = Encoder;
+	Velocity = this->Velocity_Kp * Encoder + this->Velocity_Ki * Encoder_Int + this->Velocity_Kd * Encoder_Diff;
 	return Velocity;
 }
 
@@ -109,50 +112,50 @@ void Bala::PIDController()
 
 void Bala::begin()
 {
-  // Power on stabilizing ...
-  delay(500);
+	// Power on stabilizing ...
+	delay(500);
 
-  // Initialize encoder ...
-  pinMode(ENCODER_L, INPUT);
-  pinMode(DIRECTION_L, INPUT); 
-  pinMode(ENCODER_R, INPUT); 
-  pinMode(DIRECTION_R, INPUT);
-  attachInterrupt(ENCODER_L, READ_ENCODER_L, CHANGE);
-  attachInterrupt(ENCODER_R, READ_ENCODER_R, CHANGE); 
+	// Initialize encoder ...
+	pinMode(ENCODER_L, INPUT);
+	pinMode(DIRECTION_L, INPUT); 
+	pinMode(ENCODER_R, INPUT); 
+	pinMode(DIRECTION_R, INPUT);
+	attachInterrupt(ENCODER_L, READ_ENCODER_L, CHANGE);
+	attachInterrupt(ENCODER_R, READ_ENCODER_R, CHANGE); 
 
-  // Initialize motor driver TB6612FNG ...
-  this->motors->begin();
+	// Initialize motor driver TB6612FNG ...
+	this->motors->begin();
 
-  // Initialize MPU6050 ...
-  this->mpu->begin();
-  delay(500);	
+	// Initialize MPU6050 ...
+	this->mpu->begin();
+	delay(500);	
 }
 
 void Bala::run()
 {
-  static int Velocity_Count, Turn_Count;
+	static int Velocity_Count, Turn_Count;
 
-  // Attitude sample
-  this->getAttitude();
+	// Attitude sample
+	this->getAttitude();
 
-  // Car down
-  if (abs(this->angle) > 60) 
-  {
-    this->setMotor(0, 0);
-    return;
-  }
+	// Car down
+	if (abs(this->angle) > 60) 
+	{
+		this->setMotor(0, 0);
+		return;
+	}
 
-  // Encoder sample
-  if (++Velocity_Count >= 1)
-  {
-    this->speedL = +Velocity_L;  Velocity_L = 0;
-    this->speedR = +Velocity_R;  Velocity_R = 0;
-    Velocity_Count = 0;
-  }
+	// Encoder sample
+	if (++Velocity_Count >= 8)
+	{
+		this->speedL = +Velocity_L;  Velocity_L = 0;
+		this->speedR = +Velocity_R;  Velocity_R = 0;
+		Velocity_Count = 0;
+	}
 
-  // Compute PID
-  this->PIDController();
+	// Compute PID
+	this->PIDController();
 
-  // Motor out
-  this->setMotor(+this->Motor1, -this->Motor2);
+	// Motor out
+	this->setMotor(+this->Motor1, -this->Motor2);
 }
