@@ -2,7 +2,7 @@
 #include <WiFi.h>
 #include <EEPROM.h>
 #include <MPU6050.h>
-#include <KalmanFilter.h>
+#include <Kalman.h>
 #include <TB6612FNG.h>
 #include <Bala.h>
 
@@ -27,9 +27,11 @@ const char* TCPCert  = "USERNAME AND PASSWORD";
 
 WiFiClient client;
 MPU6050 mpu;
-KalmanFilter kf;
+Kalman kfr, kfp;
+// Kalman kfr(/*init_angle*/0.0, /*Q_angle*/0.001, /*Q_bias*/0.005, /*R_measure*/0.5);
+// Kalman kfp(/*init_angle*/0.0, /*Q_angle*/0.001, /*Q_bias*/0.005, /*R_measure*/0.5);
 Tb6612fng motorsDriver(STANDBY, MOTORL_IN1, MOTORL_IN2, PWML, MOTORR_IN1, MOTORR_IN2, PWMR);
-Bala myBala(mpu, kf, motorsDriver, Wire);
+Bala myBala(mpu, kfr, kfp, motorsDriver, Wire);
 
 template <class T> uint8_t EEPROM_write(uint8_t addr, const T& value)
 {
@@ -50,7 +52,7 @@ template <class T> uint8_t EEPROM_read(uint8_t addr, T& value)
 uint8_t initEEPROM(Bala &b)
 {
   Serial.println("Start EEPROM...");
-  if (!EEPROM.begin(2 + EEPROM_SIZE * sizeof(float)))
+  if (!EEPROM.begin(2 + EEPROM_SIZE * sizeof(double)))
   {
     Serial.println("Failed to initialise EEPROM");
     return 1;
@@ -58,7 +60,7 @@ uint8_t initEEPROM(Bala &b)
   if (byte(EEPROM.read(0)) == EEPROM_FLAG && byte(EEPROM.read(1)) == EEPROM_FLAG)
   {
     Serial.println("Read PID parameters from EEPROM ...");
-    float val;
+    double val;
     uint8_t addr = 2;
     for (uint8_t i = 0; i < EEPROM_SIZE; ++i)
     {
@@ -159,15 +161,17 @@ void onWiFi()
   Serial.print(cmd);
   if (cmd == String("#"))
   {
-    sprintf(info, "Kp_B: %d:%.4d\r\nKd_B: %d:%.4d\r\nKp_V: %d:%.4d\r\nKd_V: %d:%.4d\r\n", 
+    sprintf(info, "Kp_B: %d:%.4d\r\nKd_B: %d:%.4d\r\nKp_V: %d:%.4d\r\nKi_V: %d:%.4d\r\nKd_V: %d:%.4d\r\n", 
       (uint32_t)myBala.getParaK(0), (uint32_t)(myBala.getParaK(0) * 10000) % 10000,
       (uint32_t)myBala.getParaK(1), (uint32_t)(myBala.getParaK(1) * 10000) % 10000,
       (uint32_t)myBala.getParaK(2), (uint32_t)(myBala.getParaK(2) * 10000) % 10000,
-      (uint32_t)myBala.getParaK(3), (uint32_t)(myBala.getParaK(3) * 10000) % 10000);
+      (uint32_t)myBala.getParaK(3), (uint32_t)(myBala.getParaK(3) * 10000) % 10000,
+      (uint32_t)myBala.getParaK(4), (uint32_t)(myBala.getParaK(4) * 10000) % 10000);
     Serial.println(myBala.getParaK(0));
     Serial.println(myBala.getParaK(1));
     Serial.println(myBala.getParaK(2));
     Serial.println(myBala.getParaK(3));
+    Serial.println(myBala.getParaK(4));
     client.print(info);
   }
   else
@@ -182,17 +186,23 @@ void onWiFi()
 void loop() 
 {
   // Serial display
-  // static uint32_t disp_interval = millis() + 5;
-  // if (millis() > disp_interval) 
-  // {
-  //   disp_interval = millis() + 20;
-  //   Serial.print("V_L: ");
-  //   Serial.println(myBala.getSpeedL());
-  //   Serial.print("V_R: ");
-  //   Serial.println(myBala.getSpeedR());
-  //   Serial.print("Angle: ");
-  //   Serial.println(myBala.getAngle());
-  // }
+  static uint32_t disp_interval = millis() + 5;
+  if (millis() > disp_interval) 
+  {
+    disp_interval = millis() + 20;
+    Serial.print("V_L: ");
+    Serial.println(myBala.getSpeedL());
+    Serial.print("V_R: ");
+    Serial.println(myBala.getSpeedR());
+    Serial.print("Roll: ");
+    Serial.println(myBala.getRoll());
+    Serial.print("Pitch: ");
+    Serial.println(myBala.getPitch());
+    Serial.print("GyroX: ");
+    Serial.println(myBala.getGyroX());
+    Serial.print("GyroY: ");
+    Serial.println(myBala.getGyroY());
+  }
 
   // Core control
   static uint32_t control_interval = millis() + 5;

@@ -1,5 +1,7 @@
 #include "Bala.h"
 
+// #define RESTRICT_PITCH
+
 volatile int16_t Velocity_L, Velocity_R = 0;   // encoder data of wheels
 
 /*------------------------------ ISR -----------------------------------*/
@@ -32,12 +34,15 @@ void IRAM_ATTR READ_ENCODER_R()
 }
 /*----------------------------------------------------------------------*/
 
-Bala::Bala(MPU6050 &m, KalmanFilter &kf, Tb6612fng &tb, TwoWire &w)
+Bala::Bala(MPU6050 &m, Kalman &kfr, Kalman &kfp, Tb6612fng &tb, TwoWire &w)
 {
 	this->wire = &w;
 	this->motors = &tb;
 	this->mpu = &m;
-	this->filter = &kf;
+	this->roll_filter = &kfr;
+	this->pitch_filter = &kfp;
+
+	this->kal_timer = micros();
 
 	this->Balance_Kp = 8.0;
 	this->Balance_Kd = 0.02;
@@ -54,16 +59,27 @@ void Bala::_constrain(int16_t &val, int16_t low, int16_t high)
 
 void Bala::getAttitude()
 {
-	/* Parameters of Kalman Filter */
-	static const float K1 = 0.05;  						// weight of accelator
-	static const float Q_angle = 0.001, Q_gyro = 0.005;
-	static const float R_angle = 0.5 , C_0 = 1;
-	static const float dt = 0.005; 						// sample period
-
 	this->mpu->getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-	this->filter->Angletest(ax, ay, az, gx, gy, gz, dt, Q_angle, Q_gyro, R_angle, C_0, K1);
-	this->angle = this->filter->angle;
-	this->gyro = this->filter->Gyro_x;
+
+	// Cal roll and pitch
+#ifdef RESTRICT_PITCH
+	double newroll  = atan2(ay, az) * 57.296;
+	double newpitch = atan(-ax / sqrt(ay * ay + az * az)) * 57.296;
+#else
+	double newroll  = atan(ay / sqrt(ax * ax + az * az)) * 57.296;
+	double newpitch = atan2(-ax, az) * 57.296;
+#endif
+	this->gyrox = gx / 131.0;
+	this->gyroy = gy / 131.0;
+
+	// Cal delta time
+	double dt = (double)(micros() - this->kal_timer) / 1000000; 
+
+	// Cal the angles using Kalman filter
+	this->roll = this->roll_filter->getAngle(newroll, this->gyrox, dt);
+	this->pitch = this->pitch_filter->getAngle(newpitch, this->gyroy, dt);
+
+	this->kal_timer = micros();
 }
 
 void Bala::setMotor(int16_t M1, int16_t M2)
@@ -74,16 +90,16 @@ void Bala::setMotor(int16_t M1, int16_t M2)
 
 int16_t Bala::balance()
 {
-	int16_t balance = this->Balance_Kp * this->angle + this->Balance_Kd * this->gyro;
+	int16_t balance = this->Balance_Kp * this->pitch + this->Balance_Kd * this->gyroy;
 	return balance;
 }
 
 int16_t Bala::velocity(int16_t target)
 {
-	static float Encoder, Encoder_last;
+	static double Encoder, Encoder_last;
 	static int16_t Encoder_Int, Encoder_Diff;
 	int16_t Velocity;
-	Encoder = 0.7 * Encoder + 0.3 * ((this->speedL + this->speedR) - target);	 // apply first-order low pass filter 
+	Encoder = 0.8 * Encoder + 0.2 * ((this->speedL + this->speedR) - target);	 // apply first-order low pass filter 
 	Encoder_Int += Encoder;													     // integrate
 	this->_constrain(Encoder_Int, -3000, +3000);
 	Encoder_Diff = Encoder - Encoder_last;                                       // differential
@@ -139,14 +155,14 @@ void Bala::run()
 	this->getAttitude();
 
 	// Car down
-	if (abs(this->angle) > 60) 
+	if (abs(this->pitch) > 40) 
 	{
 		this->setMotor(0, 0);
 		return;
 	}
 
 	// Encoder sample
-	if (++Velocity_Count >= 8)
+	if (++Velocity_Count >= 1)
 	{
 		this->speedL = +Velocity_L;  Velocity_L = 0;
 		this->speedR = +Velocity_R;  Velocity_R = 0;

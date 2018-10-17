@@ -5,7 +5,7 @@
 #include "Wire.h"
 #include "MPU6050.h"
 #include "TB6612FNG.h"
-#include "KalmanFilter.h"
+#include "Kalman.h"
 
 #define ENCODER_L 2
 #define DIRECTION_L 0
@@ -18,15 +18,18 @@ private:
 	TwoWire 		*wire;
 	MPU6050 		*mpu;
 	Tb6612fng 		*motors;
-	KalmanFilter 	*filter;
+	Kalman 			*roll_filter;
+	Kalman			*pitch_filter;
 
 	int16_t ax, ay, az, gx, gy, gz;
-	int16_t angle, gyro;
+	uint32_t kal_timer;
+	double roll, pitch;
+	double gyrox, gyroy;
 
 	int16_t speedL, speedR;
 
-	float Balance_Kp, Balance_Kd;
-	float Velocity_Kp, Velocity_Ki, Velocity_Kd;
+	double Balance_Kp, Balance_Kd;
+	double Velocity_Kp, Velocity_Ki, Velocity_Kd;
 
 	int16_t Motor1, Motor2;
 
@@ -41,15 +44,18 @@ private:
 
 
 public:
-	Bala(MPU6050 &m, KalmanFilter &kf, Tb6612fng &tb, TwoWire &w = Wire);
+	Bala(MPU6050 &m, Kalman &kfr, Kalman &kfp, Tb6612fng &tb, TwoWire &w = Wire);
 
 	void begin();
 	void run();
 
-	float getAngle() { return angle; };
+	double getRoll() { return roll; };
+	double getPitch() { return pitch; };
+	double getGyroX() { return gyrox; };
+	double getGyroY() { return gyroy; };
 	int16_t getSpeedL() { return speedL; };
 	int16_t getSpeedR() { return speedR; };
-	float getParaK(uint8_t idx)
+	double getParaK(uint8_t idx)
 	{
 		switch(idx)
 		{
@@ -62,7 +68,7 @@ public:
 		}		
 	}
 
-	void setParaK(uint8_t idx, float val) 
+	void setParaK(uint8_t idx, double val) 
 	{
 		switch(idx)
 		{
