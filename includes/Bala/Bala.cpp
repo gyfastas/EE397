@@ -44,11 +44,17 @@ Bala::Bala(MPU6050 &m, Kalman &kfr, Kalman &kfp, Tb6612fng &tb, TwoWire &w)
 
 	this->kal_timer = micros();
 
-	this->Balance_Kp = 8.0;
-	this->Balance_Kd = 0.02;
-	this->Velocity_Kp = 3.0;
-	this->Velocity_Ki = 0.015;
+	this->tarAngle = -4.7296;
+
+	this->Velocity_Period = 8;
+
+	this->Balance_Kp = 10.0;
+	this->Balance_Kd = 1.0;
+	this->Velocity_Kp = 2.0;
+	this->Velocity_Ki = 0.001;
 	this->Velocity_Kd = 0;
+
+	this->cardown_limen = 40;
 }
 
 void Bala::_constrain(int16_t &val, int16_t low, int16_t high)
@@ -90,7 +96,7 @@ void Bala::setMotor(int16_t M1, int16_t M2)
 
 int16_t Bala::balance()
 {
-	int16_t balance = this->Balance_Kp * this->pitch + this->Balance_Kd * this->gyroy;
+	int16_t balance = this->Balance_Kp * (this->pitch - this->tarAngle) + this->Balance_Kd * this->gyroy;
 	return balance;
 }
 
@@ -155,14 +161,14 @@ void Bala::run()
 	this->getAttitude();
 
 	// Car down
-	if (abs(this->pitch) > 40) 
+	if (abs(this->pitch) > this->cardown_limen) 
 	{
 		this->setMotor(0, 0);
 		return;
 	}
 
 	// Encoder sample
-	if (++Velocity_Count >= 1)
+	if (++Velocity_Count >= this->Velocity_Period)
 	{
 		this->speedL = +Velocity_L;  Velocity_L = 0;
 		this->speedR = +Velocity_R;  Velocity_R = 0;

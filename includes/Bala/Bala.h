@@ -23,13 +23,20 @@ private:
 
 	int16_t ax, ay, az, gx, gy, gz;
 	uint32_t kal_timer;
+
+	double tarAngle;
+
 	double roll, pitch;
 	double gyrox, gyroy;
 
 	int16_t speedL, speedR;
 
+	uint8_t Velocity_Period;
+
 	double Balance_Kp, Balance_Kd;
 	double Velocity_Kp, Velocity_Ki, Velocity_Kd;
+
+	uint8_t cardown_limen;
 
 	int16_t Motor1, Motor2;
 
@@ -64,6 +71,9 @@ public:
 		case 2: return Velocity_Kp;
 		case 3: return Velocity_Ki;
 		case 4: return Velocity_Kd;
+		case 5: return tarAngle;
+		case 6: return (double)Velocity_Period;
+		case 7: return (double)cardown_limen;
 		default: return 0; 
 		}		
 	}
@@ -77,6 +87,9 @@ public:
 		case 2: Velocity_Kp = val; break;
 		case 3: Velocity_Ki = val; break;
 		case 4: Velocity_Kd = val; break;
+		case 5: tarAngle = val; break;
+		case 6: Velocity_Period = (uint8_t)val; break;
+		case 7: cardown_limen = (uint8_t)val; break;
 		default: break;
 		}
 	}
