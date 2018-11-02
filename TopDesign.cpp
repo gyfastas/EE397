@@ -5,6 +5,7 @@
 #include <Kalman.h>
 #include <TB6612FNG.h>
 #include <Bala.h>
+#include <Flash.h>
 
 #define EEPROM_SIZE 8
 #define EEPROM_FLAG 0x02
@@ -30,62 +31,7 @@ MPU6050 mpu;
 Kalman kfr, kfp;
 Tb6612fng motorsDriver(STANDBY, MOTORL_IN1, MOTORL_IN2, PWML, MOTORR_IN1, MOTORR_IN2, PWMR);
 Bala myBala(mpu, kfr, kfp, motorsDriver, Wire);
-
-template <class T> uint8_t EEPROM_write(uint8_t addr, const T& value)
-{
-	const byte* p = (const byte*)(const void*)&value;
-	for (uint8_t i = 0; i < sizeof(value); i++)
-		EEPROM.write(addr++, *p++);
-	return addr;
-}
-
-template <class T> uint8_t EEPROM_read(uint8_t addr, T& value)
-{
-	byte* p = (byte*)(void*)&value;
-	for (uint8_t i = 0; i < sizeof(value); i++)
-		*p++ = EEPROM.read(addr++);
-	return addr;
-}
-
-uint8_t initEEPROM(Bala &b)
-{
-	Serial.println("Start EEPROM...");
-	if (!EEPROM.begin(2 + EEPROM_SIZE * sizeof(double)))
-	{
-		Serial.println("Failed to initialise EEPROM");
-		return 1;
-	}
-	if (byte(EEPROM.read(0)) == EEPROM_FLAG && byte(EEPROM.read(1)) == EEPROM_FLAG)
-	{
-		Serial.println("Read PID parameters from EEPROM ...");
-		double val;
-		uint8_t addr = 2;
-		for (uint8_t i = 0; i < EEPROM_SIZE; ++i)
-		{
-			addr = EEPROM_read(addr, val);
-			b.setParaK(i, val);
-		}      
-	}
-	else
-	{
-		Serial.println("First time to use EEPROM ... ");
-		EEPROM.write(0, EEPROM_FLAG); EEPROM.write(1, EEPROM_FLAG);
-		uint8_t addr = 2;
-		for (uint8_t i = 0; i < EEPROM_SIZE; ++i)
-			addr = EEPROM_write(addr, b.getParaK(i));   
-		EEPROM.commit();
-	}
-	return 0;
-}
-
-void updateEEPROM(Bala &b)
-{
-	Serial.println("Update EEPROM ... ");
-	uint8_t addr = 2;
-	for (uint8_t i = 0; i < EEPROM_SIZE; ++i)
-		addr = EEPROM_write(addr, b.getParaK(i));    
-	EEPROM.commit();
-}
+Flash myFlash(EEPROM_SIZE, EEPROM_FLAG);
 
 void WiFiConfig()
 {
@@ -117,99 +63,107 @@ void WiFiConfig()
 	client.print(TCPCert);
 }
 
-void setup() 
+void remoteControl(void *parameter)
 {
-	// Power on stabilizing ...
-	delay(500);
-
-	// Start I2C bus
-	Wire.begin(/*SDA*/21, /*SCL*/22);
-	Wire.setClock(400000UL);          // Set I2C frequency to 400kHz
-	delay(500);
-
-	// Start Serial for diplay debug message
-	Serial.begin(115200);
-	delay(500);
-
-	// Initialize bala ...
-	myBala.begin();
-	delay(500);
-
-	// Update PID parameters ...
-	if (initEEPROM(myBala))
-	{
-		Serial.println("Restart ...");
-		ESP.restart();
-	}
-
-	// Connect to WiFi route and the remote TCP server
-	WiFiConfig();
+  // Connect to WiFi route and the remote TCP server
+  WiFiConfig();
+  while(1)
+  {
+    // Get command from remote controller via WiFi
+    if (client.available())
+    {
+      String cmd = client.readStringUntil('\r');
+      cmd.trim();
+      Serial.print("\nGet command: ");
+      Serial.println(cmd);
+      if (cmd == String("#"))
+      {
+        String info = "Angle: ";     info += myBala.getPitch();
+        info += "\r\nKp_B: ";        info += myBala.getParaK(0);
+        info += "\r\nKd_B: ";        info += myBala.getParaK(1);
+        info += "\r\nKp_V: ";        info += myBala.getParaK(2);
+        info += "\r\nKi_V: ";        info += myBala.getParaK(3);
+        info += "\r\nKd_V: ";        info += myBala.getParaK(4);
+        info += "\r\nTargetAngle: "; info += myBala.getParaK(5);
+        info += "\r\nVecPeriod: ";   info += myBala.getParaK(6);
+        info += "\r\nCarDown: ";     info += myBala.getParaK(7);
+        client.println(info.c_str());
+        for (uint8_t i = 0; i < EEPROM_SIZE; ++i)
+          Serial.println(myBala.getParaK(i));
+      }
+      else
+      {
+        myBala.setParaK((uint8_t)(cmd[0] - '0' - 1), cmd.substring(1).toFloat());
+        myFlash.updateEEPROM(myBala);    
+      }
+    } 
+    vTaskDelay(10);
+  }
+  vTaskDelete(NULL);  
 }
 
-void onWiFi()
+void balaControl(void *parameter)
 {
-	static char info[50];
-	String cmd = client.readStringUntil('\r');
-	cmd.trim();
-	Serial.print("\nGet command: ");
-	Serial.print(cmd);
-	if (cmd == String("#"))
-	{
-		sprintf(info, "Angle: %d.%.2d\r\nKp_B: %d.%.4d\r\nKd_B: %d.%.4d\r\nKp_V: %d.%.4d\r\nKi_V: %d.%.4d\r\nKd_V: %d.%.4d\r\n
-			TargetAngle: %d.%.4d\r\nVecPeriod: %d\r\nCarDown: %d", 
-			(uint32_t)myBala.getPitch(), (uint32_t)(myBala.getPitch() * 100) % 100,
-			(uint32_t)myBala.getParaK(0), (uint32_t)(myBala.getParaK(0) * 10000) % 10000,
-			(uint32_t)myBala.getParaK(1), (uint32_t)(myBala.getParaK(1) * 10000) % 10000,
-			(uint32_t)myBala.getParaK(2), (uint32_t)(myBala.getParaK(2) * 10000) % 10000,
-			(uint32_t)myBala.getParaK(3), (uint32_t)(myBala.getParaK(3) * 10000) % 10000,
-			(uint32_t)myBala.getParaK(4), (uint32_t)(myBala.getParaK(4) * 10000) % 10000,
-			(uint32_t)myBala.getParaK(5), (uint32_t)(myBala.getParaK(5) * 10000) % 10000,
-			(uint8_t)myBala.getParaK(6), (uint8_t)myBala.getParaK(7));
-		client.print(info);
-		for (uint8_t i = 0; i < EEPROM_SIZE; ++i)
-			Serial.println(myBala.getParaK(i));
-	}
-	else
-	{
-		myBala.setParaK((uint8_t)(cmd[0] - '0' - 1), cmd.substring(1).toFloat());
-		// client.print("OK");  
-		// client.println(cmd.substring(1).toFloat());
-		updateEEPROM(myBala);    
-	}
+  // Initialize bala ...
+  myBala.begin();
+  delay(500);
+
+  // Update PID parameters ...
+  if (myFlash.initEEPROM(myBala))
+  {
+    Serial.println("Restart ...");
+    ESP.restart();
+  }
+
+  while(1)
+  {
+    static uint32_t control_interval = millis() + 5;
+    if (millis() > control_interval) 
+    {
+      control_interval = millis() + 5;
+      myBala.run();
+    }  
+    vTaskDelay(10); 
+  }
+  vTaskDelete(NULL);  
+}
+
+void setup() 
+{
+  // Power on stabilizing ...
+  delay(500);
+
+  // Start I2C bus
+  Wire.begin(/*SDA*/21, /*SCL*/22);
+  Wire.setClock(400000UL);          // Set I2C frequency to 400kHz
+  delay(500);
+
+  // Start Serial for diplay debug message
+  Serial.begin(115200);
+  delay(500);
+
+  // Create a task on RTOS for self-balance car control
+  xTaskCreatePinnedToCore(
+    balaControl,          /* Task function. */
+    "balaControl",        /* String with name of task. */
+    10000,                /* Stack size in words. */
+    NULL,                 /* Parameter passed as input of the task */
+    2,                    /* Priority of the task. */
+    NULL,                 /* Task handle. */
+    1);                   /* Run on core 1. */
+
+  // Create a task on RTOS for WiFi event
+  xTaskCreatePinnedToCore(
+    remoteControl,        /* Task function. */
+    "remoteControl",      /* String with name of task. */
+    10000,                /* Stack size in words. */
+    NULL,                 /* Parameter passed as input of the task */
+    1,                    /* Priority of the task. */
+    NULL,                 /* Task handle. */
+    0);                   /* Run on core 0. */
 }
 
 void loop() 
 {
-	// Serial display
-	// static uint32_t disp_interval = millis() + 5;
-	// if (millis() > disp_interval) 
-	// {
-	// 	disp_interval = millis() + 20;
-	// 	Serial.print("V_L: ");
-	// 	Serial.println(myBala.getSpeedL());
-	// 	Serial.print("V_R: ");
-	// 	Serial.println(myBala.getSpeedR());
-	// 	Serial.print("Roll: ");
-	// 	Serial.println(myBala.getRoll());
-	// 	Serial.print("Pitch: ");
-	// 	Serial.println(myBala.getPitch());
-	// 	Serial.print("GyroX: ");
-	// 	Serial.println(myBala.getGyroX());
-	// 	Serial.print("GyroY: ");
-	// 	Serial.println(myBala.getGyroY());
-	// }
 
-	// Core control
-	static uint32_t control_interval = millis() + 5;
-	if (millis() > control_interval) 
-	{
-		control_interval = millis() + 5;
-		myBala.run();
-	}  
-
-	// Get command from remote controller via WiFi
-	if (client.available())
-	{
-		onWiFi();
-	}
 }
