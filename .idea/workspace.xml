@@ -4,8 +4,11 @@
     <list default="true" id="fed29dd7-8bfc-4119-961b-849888fc545e" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
 <<<<<<< HEAD
+<<<<<<< HEAD
       <change beforePath="$PROJECT_DIR$/UIdesign/Mainw1.ui" afterPath="$PROJECT_DIR$/UIdesign/Mainw1.ui" />
 =======
+=======
+>>>>>>> parent of c407d0d... update UI
       <change beforePath="$PROJECT_DIR$/PPT/中期检测报告.pptx" afterPath="$PROJECT_DIR$/PPT/中期检测报告.pptx" />
       <change beforePath="$PROJECT_DIR$/Reference/~$目计划(1).docx" afterPath="" />
       <change beforePath="$PROJECT_DIR$/UIdesign/MainW.py" afterPath="$PROJECT_DIR$/UIdesign/MainW.py" />
@@ -62,6 +65,7 @@
         </entry>
       </file>
 <<<<<<< HEAD
+<<<<<<< HEAD
       <file leaf-file-name="Main3.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/UIdesign/Main3.py">
           <provider selected="true" editor-type-id="text-editor">
@@ -84,6 +88,8 @@
           </provider>
         </entry>
       </file>
+=======
+>>>>>>> parent of c407d0d... update UI
 =======
 >>>>>>> parent of c407d0d... update UI
       <file leaf-file-name="QtCore.pyi" pinned="false" current-in-tab="false">
@@ -131,6 +137,7 @@
     </leaf>
   </component>
 <<<<<<< HEAD
+<<<<<<< HEAD
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
@@ -151,6 +158,8 @@
       <replace>VKDEdit</replace>
     </replaceStrings>
   </component>
+=======
+>>>>>>> parent of c407d0d... update UI
 =======
 >>>>>>> parent of c407d0d... update UI
   <component name="Git.Settings">
@@ -317,17 +326,23 @@
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
 <<<<<<< HEAD
+<<<<<<< HEAD
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3295325" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3295325" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.20922747" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
 =======
+=======
+>>>>>>> parent of c407d0d... update UI
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3295325" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3295325" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.20654507" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+<<<<<<< HEAD
+>>>>>>> parent of c407d0d... update UI
+=======
 >>>>>>> parent of c407d0d... update UI
       <window_info id="R Packages" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Docker" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -358,7 +373,10 @@
   </component>
   <component name="editorHistoryManager">
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> parent of c407d0d... update UI
     <entry file="file://$PROJECT_DIR$/TCP/PortListen.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3948">
