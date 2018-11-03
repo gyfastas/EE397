@@ -7,8 +7,8 @@
 #include <Bala.h>
 #include <Flash.h>
 
-#define EEPROM_SIZE 8
-#define EEPROM_FLAG 0x02
+#define EEPROM_SIZE 12
+#define EEPROM_FLAG 0x01
 
 #define STANDBY 15
 #define MOTORL_IN1 5
@@ -18,8 +18,9 @@
 #define MOTORR_IN2 16
 #define PWMR 17
 
-const char* ssid     = "WiFiSSID";
-const char* password = "WiFIPSWD";
+#define NUMSSID 2
+const String ssid[NUMSSID] = { "WiFiSSID1", "WiFiSSID2" };
+const String pswd[NUMSSID] = { "WiFIPSWD1", "WiFIPSWD2" };
 
 const char* host     = "REMOTETCP";
 const int   hostPort = 80;
@@ -35,16 +36,34 @@ Flash myFlash(EEPROM_SIZE, EEPROM_FLAG);
 
 void WiFiConfig()
 {
-	Serial.println();
-	Serial.print("Connecting to ");
-	Serial.println(ssid);
-
-	WiFi.begin(ssid, password);
-
-	while (WiFi.status() != WL_CONNECTED) 
+	static uint8_t connection_timeout_cnt = 0;
+	for (uint8_t idx = 0; idx < NUMSSID; ++idx)
 	{
-		delay(500);
-		Serial.print(".");
+		Serial.println();
+		Serial.print("Connecting to ");
+		Serial.println(ssid[idx]);
+
+		WiFi.begin(ssid[idx].c_str(), pswd[idx].c_str());
+
+		connection_timeout_cnt = 0;
+
+		while (WiFi.status() != WL_CONNECTED) 
+		{
+			delay(500);
+			if (++connection_timeout_cnt >= 4)
+				break;
+			Serial.print(".");
+		}
+
+		if (WiFi.status() == WL_CONNECTED)
+			break;
+	}
+
+	if (WiFi.status() != WL_CONNECTED)
+	{
+		Serial.println();
+		Serial.println("WiFi connection failed.");
+		return;
 	}
 
 	Serial.println();
@@ -55,7 +74,7 @@ void WiFiConfig()
 
 	if (!client.connect(host, hostPort)) 
 	{
-		Serial.println("connection failed");
+		Serial.println("TCP Server connection failed");
 		return;
 	}
 
@@ -78,22 +97,32 @@ void remoteControl(void *parameter)
       Serial.println(cmd);
       if (cmd == String("#"))
       {
-        String info = "Angle: ";     info += myBala.getPitch();
+        String info = "Angle: ";     info += myBala.getRoll();
         info += "\r\nKp_B: ";        info += myBala.getParaK(0);
         info += "\r\nKd_B: ";        info += myBala.getParaK(1);
         info += "\r\nKp_V: ";        info += myBala.getParaK(2);
         info += "\r\nKi_V: ";        info += myBala.getParaK(3);
         info += "\r\nKd_V: ";        info += myBala.getParaK(4);
-        info += "\r\nTargetAngle: "; info += myBala.getParaK(5);
-        info += "\r\nVecPeriod: ";   info += myBala.getParaK(6);
-        info += "\r\nCarDown: ";     info += myBala.getParaK(7);
+        info += "\r\nKp_T: ";        info += myBala.getParaK(5);
+        info += "\r\nKi_T: ";        info += myBala.getParaK(6);
+        info += "\r\nKd_T: ";        info += myBala.getParaK(7);
+        info += "\r\nSDK: ";         info += myBala.getParaK(8);
+        info += "\r\nTargetAngle: "; info += myBala.getParaK(9);
+        info += "\r\nVecPeriod: ";   info += myBala.getParaK(10);
+        info += "\r\nCarDown: ";     info += myBala.getParaK(11);
+        info += "\r\nSpeedL: ";      info += myBala.getSpeedL();
+        info += "\r\nSpeedR: ";      info += myBala.getSpeedR();
         client.println(info.c_str());
         for (uint8_t i = 0; i < EEPROM_SIZE; ++i)
           Serial.println(myBala.getParaK(i));
       }
       else
       {
-        myBala.setParaK((uint8_t)(cmd[0] - '0' - 1), cmd.substring(1).toFloat());
+      	uint8_t ty = cmd.indexOf('#') - 1;
+      	if (ty == 0)
+        	myBala.setParaK((uint8_t)(cmd.substring(0,1).toInt() - 1), cmd.substring(1).toFloat());
+        else if (ty == 1)
+        	myBala.setParaK((uint8_t)(cmd.substring(0,2).toInt() - 1), cmd.substring(2).toFloat());
         myFlash.updateEEPROM(myBala);    
       }
     } 

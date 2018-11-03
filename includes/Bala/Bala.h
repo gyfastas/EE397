@@ -27,7 +27,7 @@ private:
 	double tarAngle;
 
 	double roll, pitch;
-	double gyrox, gyroy;
+	double gyrox, gyroy, gyroz;
 
 	int16_t speedL, speedR;
 
@@ -35,6 +35,8 @@ private:
 
 	double Balance_Kp, Balance_Kd;
 	double Velocity_Kp, Velocity_Ki, Velocity_Kd;
+	double Turn_Kp, Turn_Ki, Turn_Kd;
+	double Speed_Diff_K;
 
 	uint8_t cardown_limen;
 
@@ -47,6 +49,7 @@ private:
 
 	int16_t balance();
 	int16_t velocity(int16_t target = 0);
+	int16_t turn();
 	void PIDController();
 
 
@@ -66,14 +69,18 @@ public:
 	{
 		switch(idx)
 		{
-		case 0: return Balance_Kp;
-		case 1: return Balance_Kd;
-		case 2: return Velocity_Kp;
-		case 3: return Velocity_Ki;
-		case 4: return Velocity_Kd;
-		case 5: return tarAngle;
-		case 6: return (double)Velocity_Period;
-		case 7: return (double)cardown_limen;
+		case 0 : return Balance_Kp;
+		case 1 : return Balance_Kd;
+		case 2 : return Velocity_Kp;
+		case 3 : return Velocity_Ki;
+		case 4 : return Velocity_Kd;
+		case 5 : return Turn_Kp;
+		case 6 : return Turn_Ki;
+		case 7 : return Turn_Kd;	
+		case 8 : return Speed_Diff_K;	
+		case 9 : return tarAngle;
+		case 10 : return (double)Velocity_Period;
+		case 11: return (double)cardown_limen;
 		default: return 0; 
 		}		
 	}
@@ -82,14 +89,18 @@ public:
 	{
 		switch(idx)
 		{
-		case 0: Balance_Kp = val; break;
-		case 1: Balance_Kd = val; break;
-		case 2: Velocity_Kp = val; break;
-		case 3: Velocity_Ki = val; break;
-		case 4: Velocity_Kd = val; break;
-		case 5: tarAngle = val; break;
-		case 6: Velocity_Period = (uint8_t)val; break;
-		case 7: cardown_limen = (uint8_t)val; break;
+		case 0 : Balance_Kp = val; break;
+		case 1 : Balance_Kd = val; break;
+		case 2 : Velocity_Kp = val; break;
+		case 3 : Velocity_Ki = val; break;
+		case 4 : Velocity_Kd = val; break;
+		case 5 : Turn_Kp = val; break;
+		case 6 : Turn_Ki = val; break;
+		case 7 : Turn_Kd = val; break;
+		case 8 : Speed_Diff_K = val; break;
+		case 9 : tarAngle = val; break;
+		case 10 : Velocity_Period = (uint8_t)val; break;
+		case 11: cardown_limen = (uint8_t)val; break;
 		default: break;
 		}
 	}

@@ -1,6 +1,6 @@
 #include "Bala.h"
 
-// #define RESTRICT_PITCH
+#define RESTRICT_PITCH
 
 volatile int16_t Velocity_L, Velocity_R = 0;   // encoder data of wheels
 
@@ -48,11 +48,15 @@ Bala::Bala(MPU6050 &m, Kalman &kfr, Kalman &kfp, Tb6612fng &tb, TwoWire &w)
 
 	this->Velocity_Period = 8;
 
-	this->Balance_Kp = 10.0;
-	this->Balance_Kd = 1.0;
-	this->Velocity_Kp = 2.0;
-	this->Velocity_Ki = 0.001;
+	this->Balance_Kp = 12.0;
+	this->Balance_Kd = 8.0;
+	this->Velocity_Kp = 0.5;
+	this->Velocity_Ki = 0.0025;
 	this->Velocity_Kd = 0;
+	this->Turn_Kp = 0;
+	this->Turn_Ki = 0;
+	this->Turn_Kd = 0;
+	this->Speed_Diff_K = 0;
 
 	this->cardown_limen = 40;
 }
@@ -77,6 +81,7 @@ void Bala::getAttitude()
 #endif
 	this->gyrox = gx / 131.0;
 	this->gyroy = gy / 131.0;
+	this->gyroz = gz / 131.0;
 
 	// Cal delta time
 	double dt = (double)(micros() - this->kal_timer) / 1000000; 
@@ -96,8 +101,8 @@ void Bala::setMotor(int16_t M1, int16_t M2)
 
 int16_t Bala::balance()
 {
-	int16_t balance = this->Balance_Kp * (this->pitch - this->tarAngle) + this->Balance_Kd * this->gyroy;
-	return balance;
+	int16_t balance = this->Balance_Kp * (this->roll - this->tarAngle) + this->Balance_Kd * this->gyroy;
+	return -balance;
 }
 
 int16_t Bala::velocity(int16_t target)
@@ -114,19 +119,42 @@ int16_t Bala::velocity(int16_t target)
 	return Velocity;
 }
 
+int16_t Bala::turn()
+{
+	// static int16_t Turn_Target, Turn_Convert = 3, Turn_Int;
+	// int16_t Turn;
+	// if (1 == Flag_Left)             Turn_Target += Turn_Convert;
+	// else if (1 == Flag_Right)       Turn_Target -= Turn_Convert;
+	// else Turn_Target = 0;
+	// this->_constrain(Turn_Target, -80, 80);
+	// Turn_Int += Turn_Target;													// integrate
+	// this->_constrain(Turn_Int, -3000, +3000);
+	// Turn = this->Turn_Kp * -Turn_Target + this->Turn_Ki * Turn_Int + this->Turn_Kd * this->gyroz;
+	// return Turn;
+	return 0;
+}
+
 void Bala::PIDController()
 {
 	static int16_t Balance_Pwm, Velocity_Pwm, Turn_Pwm;
+	static int16_t speed_diff, speed_diff_adjust;
 
 	// balance loop
-	Balance_Pwm = balance();
+	Balance_Pwm = this->balance();
 
 	// velocity loop
-	Velocity_Pwm = velocity();
+	Velocity_Pwm = this->velocity();
+	
+	// speed diff
+	speed_diff = (this->speedL - this->speedR);
+	speed_diff_adjust = (this->Speed_Diff_K * speed_diff);
+
+	// turn loop
+	Turn_Pwm = this->turn();
 
 	// blend loops
-	this->Motor1 = Balance_Pwm - Velocity_Pwm; 
-	this->Motor2 = Balance_Pwm - Velocity_Pwm;
+	this->Motor1 = Balance_Pwm - Velocity_Pwm + Turn_Pwm - speed_diff_adjust;
+	this->Motor2 = Balance_Pwm - Velocity_Pwm - Turn_Pwm;
 
 	this->_constrain(this->Motor1, -250, +250); 
 	this->_constrain(this->Motor1, -250, +250); 
@@ -161,7 +189,7 @@ void Bala::run()
 	this->getAttitude();
 
 	// Car down
-	if (abs(this->pitch) > this->cardown_limen) 
+	if (abs(this->roll) > this->cardown_limen) 
 	{
 		this->setMotor(0, 0);
 		return;
@@ -174,6 +202,8 @@ void Bala::run()
 		this->speedR = +Velocity_R;  Velocity_R = 0;
 		Velocity_Count = 0;
 	}
+
+	// 
 
 	// Compute PID
 	this->PIDController();
