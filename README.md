@@ -13,6 +13,7 @@ Our EE397 project
 - MPU6050
 - TB6612FNG
 - DC-DC 12V-5V Converter
+- HC-SR04
 
 ### Pin Map
 
@@ -31,4 +32,7 @@ Our EE397 project
 | Encoder    | MOTOR_L_B          | IO0          |
 | Encoder    | MOTOR_R_A          | IO34         |
 | Encoder    | MOTOR_R_A          | IO35         |
-| ---------- | ------------------ | ------------ |
+| HC-SR04    | TRIG               | IO25         |
+| HC-SR04    | ECHO               | IO39(VN)     |
+
+![image](https://github.com/gyfastas/EE397/raw/Charles/images/ESP32-DEVKIT-V2-Board-Pinout-36-GPIOs.jpg)
