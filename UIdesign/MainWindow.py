@@ -13,6 +13,7 @@ import sys
 
 class MainWindow(QWidget):
     def __init__(self):
+        super(MainWindow, self).__init__()
         #socket
         self.sock = QTcpSocket()
         self.isConnect = False
@@ -119,27 +120,83 @@ class MainWindow(QWidget):
         self.CommandEdit.setObjectName("CommandEdit")
         self.commandLayout.addWidget(self.CommandEdit)
 
+        #set the
+        self.setSlider()
 
     def setupSlot(self):
         #Slot connect#
+        self.Connect.clicked.connect(self.SockConnect)
+        self.CommandEdit.editingFinished.connect(self.WriteCommand)
+        self.disConnect.click.connect(self.SockDisConnect)
+        #Value changed in Edit
+        self.BKPEdit.editingFinished.connect(self.BKPEdit2Slider)
+        self.BKDEdit.editingFinished.connect(self.BKDEdit2Slider)
+        self.VKPEdit.editingFinished.connect(self.VKPEdit2Slider)
+        self.VKIEdit.editingFinished.connect(self.VKIEdit2Slider)
+        self.VKDEdit.editingFinished.connect(self.VKDEdit2Slider)
 
+        #Value changed in Slider
+        self.BKPSlider.valueChanged.connect(self.BKPSlider2Edit)
+        self.BKDSlider.valueChanged.connect(self.BKDSlider2Edit)
+        self.VKPSlider.valueChanged.connect(self.VKPSlider2Edit)
+        self.VKISlider.valueChanged.connect(self.VKISlider2Edit)
+        self.VKDSlider.valueChanged.connect(self.VKDSlider2Edit)
 
+    def setSlider(self):
+        #
     def SockConnect(self):
         if self.isConnect ==True:
             return False
         else:
             IP ='101.132.151.237'
             Port = 81
-
-            self.sock.connectToHost(IP,Port):
+            self.sock.connectToHost(IP,Port)
             if not self.sock.waitForConnected(2500):
                 self.commandBrowser.setText("连接失败\n")
                 return False
 
-            self.sock.connected.connect(self.on_socket_connected)
-            self.sock.disconnected.connect(self.on_socket_disconnected)
-            self.sock.readyRead.connect(self.on_socket_receive)
-            self.sock.bytesWritten.connect(self.on_socket_transmit)
-
-            print('Connect ok')
+            else:
+                print('writing')
+                data = QByteArray()
+                stream = QDataStream()
+                txstring = 'bala_control 2222'
+                self.sock.write(txstring.encode('utf-8'))
+                self.sock.waitForBytesWritten()
+            #
+            self.commandBrowser.insertPlainText("连接成功!\n")
+            self.isConnect =True
             return True
+
+    def WriteCommand(self):
+        #get text from Lineedit and show in browser
+        self.commandBrowser.insertPlainText('Wrote: '+self.CommandEdit.text()+'\n')
+        #check command
+        self.checkcmd(self.CommandEdit.text())
+        self.CommandEdit.clear()
+
+    def checkcmd(self,Message):
+        #去除空格
+        Message.replace(' ','')
+        if Message =='clear':
+            self.commandBrowser.clear()
+        elif Message =='connect':
+            self.SockConnect()
+
+        else:
+            if self.isConnect ==True:
+                self.sock.write(Message.encode('utf-8'))
+
+
+
+
+    def BKPEdit2Slider(self):
+
+    def BKDEdit2Slider(self):
+
+    def VKPEdit2Slider(self):
+
+
+app = QtWidgets.QApplication(sys.argv)
+ui = MainWindow()
+ui.show()
+sys.exit(app.exec_())
