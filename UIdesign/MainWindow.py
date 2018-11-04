@@ -127,7 +127,7 @@ class MainWindow(QWidget):
         #Slot connect#
         self.Connect.clicked.connect(self.SockConnect)
         self.CommandEdit.editingFinished.connect(self.WriteCommand)
-        self.disConnect.click.connect(self.SockDisConnect)
+        # self.disConnect.click.connect(self.SockDisConnect)
         #Value changed in Edit
         self.BKPEdit.editingFinished.connect(self.BKPEdit2Slider)
         self.BKDEdit.editingFinished.connect(self.BKDEdit2Slider)
@@ -143,7 +143,23 @@ class MainWindow(QWidget):
         self.VKDSlider.valueChanged.connect(self.VKDSlider2Edit)
 
     def setSlider(self):
-        #
+        #initialize slider paras
+        self.BKDSlider.setRange(-10,10)
+        self.BKPSlider.setRange(-10,10)
+        self.VKPSlider.setRange(-20,20)
+        self.VKDSlider.setRange(-20,20)
+        self.VKISlider.setRange(-20,20)
+        self.BKPSlider.setTickPosition(QSlider.TicksBelow)
+        self.BKDSlider.setTickPosition(QSlider.TicksBelow)
+        self.VKPSlider.setTickPosition(QSlider.TicksBelow)
+        self.VKISlider.setTickPosition(QSlider.TicksBelow)
+        self.VKDSlider.setTickPosition(QSlider.TicksBelow)
+        self.BKDSlider.setTickInterval(2)
+        self.BKPSlider.setTickInterval(2)
+        self.VKPSlider.setTickInterval(2)
+        self.VKISlider.setTickInterval(2)
+        self.VKDSlider.setTickInterval(2)
+
     def SockConnect(self):
         if self.isConnect ==True:
             return False
@@ -190,10 +206,47 @@ class MainWindow(QWidget):
 
 
     def BKPEdit2Slider(self):
+        value = float(self.BKPEdit.text())
+        self.BKPSlider.setValue(value)
 
     def BKDEdit2Slider(self):
+        value = float(self.BKDEdit.text())
+        self.BKDSlider.setValue(value)
+
 
     def VKPEdit2Slider(self):
+        value = float(self.VKPEdit.text())
+        self.VKPSlider.setValue(value)
+
+    def VKIEdit2Slider(self):
+        value = float(self.VKIEdit.text())
+        self.VKISlider.setValue(value)
+
+    def VKDEdit2Slider(self):
+        value = float(self.VKDEdit.text())
+        self.VKDSlider.setValue(value)
+
+    def BKPSlider2Edit(self):
+        value = self.BKPSlider.value()
+        self.BKPEdit.setText(str(value))
+
+    def BKDSlider2Edit(self):
+        value = self.BKDSlider.value()
+        self.BKDEdit.setText(str(value))
+
+    def VKPSlider2Edit(self):
+        value = self.VKPSlider.value()
+        self.VKPEdit.setText(str(value))
+
+    def VKISlider2Edit(self):
+        value = self.VKISlider.value()
+        self.VKIEdit.setText(str(value))
+
+    def VKDSlider2Edit(self):
+        value = self.VKDSlider.value()
+        self.VKDEdit.setText(str(value))
+
+
 
 
 app = QtWidgets.QApplication(sys.argv)
