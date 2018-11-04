@@ -1,0 +1,48 @@
+# EE397
+Our EE397 project
+
+Control UI on Computer
+
+---------
+
+## Environment
+
+Python3.6
+
+Pyqt5
+
+
+
+## LOG
+
+### 11.3
+
+重写了UI的结构
+
+self.sock 改用Python自带的Socket模块而不是QTCPSocket
+
+
+
+### 11.4
+
+8:45
+
+Qdatastream 是否适用，在本项目中该怎么用？
+
+Qtcpsocket 传输数据的方法: https://blog.csdn.net/dwb1015/article/details/21173625
+
+QTCPSocket 传输数据： 注意encode('utf-8')方法
+
+ 10:05
+
+https://www.cnblogs.com/A-FM/p/5691468.html 字符串处理
+
+10:25
+
+ 更新了cmd的写命令
+
+https://blog.csdn.net/jia666666/article/details/81534588 QSlider各个模块
+
+10:55
+
+  完成了 Slider 和 Edit 的交互

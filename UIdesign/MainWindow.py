@@ -144,21 +144,21 @@ class MainWindow(QWidget):
 
     def setSlider(self):
         #initialize slider paras
-        self.BKDSlider.setRange(-10,10)
-        self.BKPSlider.setRange(-10,10)
-        self.VKPSlider.setRange(-20,20)
-        self.VKDSlider.setRange(-20,20)
-        self.VKISlider.setRange(-20,20)
+        self.BKDSlider.setRange(-100,100)
+        self.BKPSlider.setRange(-100,100)
+        self.VKPSlider.setRange(-200,200)
+        self.VKDSlider.setRange(-200,200)
+        self.VKISlider.setRange(-200,200)
         self.BKPSlider.setTickPosition(QSlider.TicksBelow)
         self.BKDSlider.setTickPosition(QSlider.TicksBelow)
         self.VKPSlider.setTickPosition(QSlider.TicksBelow)
         self.VKISlider.setTickPosition(QSlider.TicksBelow)
         self.VKDSlider.setTickPosition(QSlider.TicksBelow)
-        self.BKDSlider.setTickInterval(2)
-        self.BKPSlider.setTickInterval(2)
-        self.VKPSlider.setTickInterval(2)
-        self.VKISlider.setTickInterval(2)
-        self.VKDSlider.setTickInterval(2)
+        self.BKDSlider.setTickInterval(1)
+        self.BKPSlider.setTickInterval(1)
+        self.VKPSlider.setTickInterval(1)
+        self.VKISlider.setTickInterval(1)
+        self.VKDSlider.setTickInterval(1)
 
     def SockConnect(self):
         if self.isConnect ==True:
@@ -181,6 +181,9 @@ class MainWindow(QWidget):
             #
             self.commandBrowser.insertPlainText("连接成功!\n")
             self.isConnect =True
+
+            self.sock.readyRead.connect(self.on_socket_receive)
+
             return True
 
     def WriteCommand(self):
@@ -202,48 +205,56 @@ class MainWindow(QWidget):
             if self.isConnect ==True:
                 self.sock.write(Message.encode('utf-8'))
 
+    def on_socket_receive(self):
+        try:
 
+            mesg = self.sock.readAll()
+
+            mesg = mesg.data().decode('utf-8')
+            self.commandBrowser.insertPlainText('Received: '+mesg+'\n')
+        except:
+            print('error')
 
 
     def BKPEdit2Slider(self):
-        value = float(self.BKPEdit.text())
+        value = float(self.BKPEdit.text())*10
         self.BKPSlider.setValue(value)
-
+        Txstring = '#'
     def BKDEdit2Slider(self):
-        value = float(self.BKDEdit.text())
+        value = float(self.BKDEdit.text())*10
         self.BKDSlider.setValue(value)
 
 
     def VKPEdit2Slider(self):
-        value = float(self.VKPEdit.text())
+        value = float(self.VKPEdit.text())*10
         self.VKPSlider.setValue(value)
 
     def VKIEdit2Slider(self):
-        value = float(self.VKIEdit.text())
+        value = float(self.VKIEdit.text())*10
         self.VKISlider.setValue(value)
 
     def VKDEdit2Slider(self):
-        value = float(self.VKDEdit.text())
+        value = float(self.VKDEdit.text())*10
         self.VKDSlider.setValue(value)
 
     def BKPSlider2Edit(self):
-        value = self.BKPSlider.value()
+        value = self.BKPSlider.value()/10
         self.BKPEdit.setText(str(value))
 
     def BKDSlider2Edit(self):
-        value = self.BKDSlider.value()
+        value = self.BKDSlider.value()/10
         self.BKDEdit.setText(str(value))
 
     def VKPSlider2Edit(self):
-        value = self.VKPSlider.value()
+        value = self.VKPSlider.value()/10
         self.VKPEdit.setText(str(value))
 
     def VKISlider2Edit(self):
-        value = self.VKISlider.value()
+        value = self.VKISlider.value()/10
         self.VKIEdit.setText(str(value))
 
     def VKDSlider2Edit(self):
-        value = self.VKDSlider.value()
+        value = self.VKDSlider.value()/10
         self.VKDEdit.setText(str(value))
 
 
