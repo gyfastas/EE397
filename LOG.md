@@ -46,3 +46,9 @@ https://blog.csdn.net/jia666666/article/details/81534588 QSlider各个模块
 10:55
 
   完成了 Slider 和 Edit 的交互
+
+
+
+11:55
+
+连接上了服务器并且打印出了信息，接下来要做的是定协议，实现上位机和小车之间的WIFI通信
