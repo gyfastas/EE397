@@ -1,33 +1,33 @@
+#include <Ultrasonic.h>
 
 #define TRIG 25
 #define ECHO 39
+#define MAX_DISTANCE 200        // Maximum sensor distance is set as 200cm.
 
-double temp, cm;
+Ultrasonic sonic(TRIG, ECHO, MAX_DISTANCE);
 
 void UltraSound(void * parameter)
 {
+	static uint16_t dist_cm;
 	while(1)
 	{
-		digitalWrite(TRIG, LOW); 
-		delayMicroseconds(2);
-		digitalWrite(TRIG, HIGH);
-		delayMicroseconds(10);
-		digitalWrite(TRIG, LOW);
-
-		temp = double(pulseIn(ECHO, HIGH));
-
-		cm = (temp * 17)/1000;
-		vTaskDelay(10);
+	    static uint32_t ranging_interval = millis() + 100;
+		if (millis() > ranging_interval) 
+		{
+			ranging_interval = millis() + 100;
+			dist_cm = sonic.ping_cm();
+			Serial.println("Distance = " + dist_cm + " cm.");
+		}  
+		vTaskDelay(10); 
 	}
-	vTaskDelete(NULL); 
+	vTaskDelete(NULL);  
 }
 
 void setup()
 {
 	Serial.begin(115200);
 	Serial.println("Begin");
-	pinMode(TRIG, OUTPUT);
-	pinMode(ECHO, INPUT);
+	sonic.begin();
 
 	xTaskCreatePinnedToCore(
 		UltraSound,           /* Task function. */
@@ -41,10 +41,5 @@ void setup()
 
 void loop()
 {
-	Serial.print("Echo =");
-	Serial.print(temp);
-	Serial.print(" | | Distance = ");
-	Serial.print(cm);
-	Serial.println("cm");
-	delay(100);
+
 }
