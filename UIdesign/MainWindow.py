@@ -120,20 +120,27 @@ class MainWindow(QWidget):
         self.CommandEdit.setObjectName("CommandEdit")
         self.commandLayout.addWidget(self.CommandEdit)
 
-        #set the
+
+        #setup slider
         self.setSlider()
 
     def setupSlot(self):
         #Slot connect#
         self.Connect.clicked.connect(self.SockConnect)
-        self.CommandEdit.editingFinished.connect(self.WriteCommand)
+        #按下回车时，发出指令
+        self.CommandEdit.returnPressed.connect(self.WriteCommand)
         # self.disConnect.click.connect(self.SockDisConnect)
         #Value changed in Edit
-        self.BKPEdit.editingFinished.connect(self.BKPEdit2Slider)
-        self.BKDEdit.editingFinished.connect(self.BKDEdit2Slider)
-        self.VKPEdit.editingFinished.connect(self.VKPEdit2Slider)
-        self.VKIEdit.editingFinished.connect(self.VKIEdit2Slider)
-        self.VKDEdit.editingFinished.connect(self.VKDEdit2Slider)
+        self.BKPEdit.returnPressed.connect(self.BKPEdit2Slider)
+        self.BKDEdit.returnPressed.connect(self.BKDEdit2Slider)
+        self.VKPEdit.returnPressed.connect(self.VKPEdit2Slider)
+        self.VKIEdit.returnPressed.connect(self.VKIEdit2Slider)
+        self.VKDEdit.returnPressed.connect(self.VKDEdit2Slider)
+        self.BKPEdit.returnPressed.connect(self.sendBKP)
+        self.BKDEdit.returnPressed.connect(self.sendBKD)
+        self.VKPEdit.returnPressed.connect(self.sendVKP)
+        self.VKIEdit.returnPressed.connect(self.sendVKI)
+        self.VKDEdit.returnPressed.connect(self.sendVKD)
 
         #Value changed in Slider
         self.BKPSlider.valueChanged.connect(self.BKPSlider2Edit)
@@ -141,6 +148,18 @@ class MainWindow(QWidget):
         self.VKPSlider.valueChanged.connect(self.VKPSlider2Edit)
         self.VKISlider.valueChanged.connect(self.VKISlider2Edit)
         self.VKDSlider.valueChanged.connect(self.VKDSlider2Edit)
+
+        #按钮信号处理
+        self.upButton.clicked.connect(self.upButtonClicked)
+        self.downButton.clicked.connect(self.downButtonClicked)
+        self.leftButton.clicked.connect(self.leftButtonClicked)
+        self.rightButton.clicked.connect(self.rightButtonClicked)
+
+        self.commandBrowser.textChanged.connect(self.cmdBrowserRollDown)
+        #键盘事件控制:
+
+    def cmdBrowserRollDown(self):
+        self.commandBrowser.moveCursor(QTextCursor.End)
 
     def setSlider(self):
         #initialize slider paras
@@ -187,8 +206,6 @@ class MainWindow(QWidget):
             return True
 
     def WriteCommand(self):
-        #get text from Lineedit and show in browser
-        self.commandBrowser.insertPlainText('Wrote: '+self.CommandEdit.text()+'\n')
         #check command
         self.checkcmd(self.CommandEdit.text())
         self.CommandEdit.clear()
@@ -196,6 +213,8 @@ class MainWindow(QWidget):
     def checkcmd(self,Message):
         #去除空格
         Message.replace(' ','')
+        #get text from Lineedit and show in browser
+        self.commandBrowser.insertPlainText('Wrote: '+Message+'\n')
         if Message =='clear':
             self.commandBrowser.clear()
         elif Message =='connect':
@@ -204,6 +223,12 @@ class MainWindow(QWidget):
         else:
             if self.isConnect ==True:
                 self.sock.write(Message.encode('utf-8'))
+
+    #专门用于发送小车控制指令的函数
+    def SendMotionControl(self,cmd):
+        if self.isConnect == True:
+            self.sock.write(cmd.encode('utf-8'))
+
 
     def on_socket_receive(self):
         try:
@@ -258,6 +283,45 @@ class MainWindow(QWidget):
         self.VKDEdit.setText(str(value))
 
 
+    def sendBKP(self):
+        cmd_string = '#K1#'+self.BKDEdit.text()+'#'
+        self.checkcmd(cmd_string)
+
+    def sendBKD(self):
+        cmd_string = '#K2#'+self.BKDEdit.text()+'#'
+        self.checkcmd(cmd_string)
+
+    def sendVKP(self):
+        cmd_string = '#K3#'+self.BKDEdit.text()+'#'
+        self.checkcmd(cmd_string)
+
+    def sendVKI(self):
+        cmd_string = '#K4#'+self.BKDEdit.text()+'#'
+        self.checkcmd(cmd_string)
+
+    def sendVKD(self):
+        cmd_string = '#K5#'+self.BKDEdit.text()+'#'
+        self.checkcmd(cmd_string)
+
+    def upButtonClicked(self):
+        cmd_string = 'W'
+        self.SendMotionControl(cmd = cmd_string)
+        self.commandBrowser.insertPlainText('Wrote:'+cmd_string+'\n')
+
+    def downButtonClicked(self):
+        cmd_string = 'S'
+        self.SendMotionControl(cmd = cmd_string)
+        self.commandBrowser.insertPlainText('Wrote:'+cmd_string+'\n')
+
+    def leftButtonClicked(self):
+        cmd_string = 'A'
+        self.SendMotionControl(cmd = cmd_string)
+        self.commandBrowser.insertPlainText('Wrote:'+cmd_string+'\n')
+
+    def rightButtonClicked(self):
+        cmd_string = 'D'
+        self.SendMotionControl(cmd = cmd_string)
+        self.commandBrowser.insertPlainText('Wrote:'+cmd_string+'\n')
 
 
 app = QtWidgets.QApplication(sys.argv)
