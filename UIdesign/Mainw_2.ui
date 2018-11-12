@@ -97,7 +97,7 @@
      <x>620</x>
      <y>20</y>
      <width>431</width>
-     <height>341</height>
+     <height>390</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="controlLayout">
@@ -193,8 +193,8 @@
     <rect>
      <x>10</x>
      <y>20</y>
-     <width>601</width>
-     <height>701</height>
+     <width>591</width>
+     <height>251</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="commandLayout">
@@ -205,6 +205,74 @@
      <widget class="QLineEdit" name="CommandEdit">
       <property name="text">
        <string/>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="formLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>290</y>
+     <width>171</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <layout class="QFormLayout" name="ParameterLayout">
+    <item row="0" column="0">
+     <widget class="QLabel" name="label_6">
+      <property name="text">
+       <string>Angle:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QLabel" name="Label_Angle">
+      <property name="text">
+       <string>TextLabel</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="label_8">
+      <property name="text">
+       <string>SppedL:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QLabel" name="Label_SpeedL">
+      <property name="text">
+       <string>TextLabel</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QLabel" name="label_10">
+      <property name="text">
+       <string>SppedR:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QLabel" name="Label_SpeedR">
+      <property name="text">
+       <string>TextLabel</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QLabel" name="label_7">
+      <property name="text">
+       <string>Distance:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <widget class="QLabel" name="Label_Distance">
+      <property name="text">
+       <string>TextLabel</string>
       </property>
      </widget>
     </item>

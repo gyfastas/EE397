@@ -110,7 +110,7 @@ class MainWindow(QWidget):
         self.VKDSlider.setObjectName("VKDSlider")
         self.controlLayout.addWidget(self.VKDSlider)
         self.verticalLayoutWidget_2 = QtWidgets.QWidget(self)
-        self.verticalLayoutWidget_2.setGeometry(QtCore.QRect(10, 20, 601, 701))
+        self.verticalLayoutWidget_2.setGeometry(QtCore.QRect(10, 20, 591, 251))
         self.verticalLayoutWidget_2.setObjectName("verticalLayoutWidget_2")
         self.commandLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_2)
         self.commandLayout.setContentsMargins(0, 0, 0, 0)
@@ -123,6 +123,40 @@ class MainWindow(QWidget):
         self.CommandEdit.setObjectName("CommandEdit")
         self.commandLayout.addWidget(self.CommandEdit)
 
+        self.formLayoutWidget = QtWidgets.QWidget(self)
+        self.formLayoutWidget.setGeometry(QtCore.QRect(10, 290, 171, 91))
+        self.formLayoutWidget.setObjectName("formLayoutWidget")
+        self.ParameterLayout = QtWidgets.QFormLayout(self.formLayoutWidget)
+        self.ParameterLayout.setContentsMargins(0, 0, 0, 0)
+        self.ParameterLayout.setObjectName("ParameterLayout")
+        self.label_6 = QtWidgets.QLabel(self.formLayoutWidget)
+        self.label_6.setObjectName("label_6")
+        self.label_6.setText('Angle:')
+        self.ParameterLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.label_6)
+        self.Label_Angle = QtWidgets.QLabel(self.formLayoutWidget)
+        self.Label_Angle.setObjectName("Label_Angle")
+        self.ParameterLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.Label_Angle)
+        self.label_8 = QtWidgets.QLabel(self.formLayoutWidget)
+        self.label_8.setObjectName("label_8")
+        self.label_8.setText('SpeedL:')
+        self.ParameterLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.label_8)
+        self.Label_SpeedL = QtWidgets.QLabel(self.formLayoutWidget)
+        self.Label_SpeedL.setObjectName("Label_SpeedL")
+        self.ParameterLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.Label_SpeedL)
+        self.label_10 = QtWidgets.QLabel(self.formLayoutWidget)
+        self.label_10.setObjectName("label_10")
+        self.label_10.setText('SpeedR:')
+        self.ParameterLayout.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.label_10)
+        self.Label_SpeedR = QtWidgets.QLabel(self.formLayoutWidget)
+        self.Label_SpeedR.setObjectName("Label_SpeedR")
+        self.ParameterLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.Label_SpeedR)
+        self.label_7 = QtWidgets.QLabel(self.formLayoutWidget)
+        self.label_7.setObjectName("label_7")
+        self.label_7.setText('Distance:')
+        self.ParameterLayout.setWidget(3, QtWidgets.QFormLayout.LabelRole, self.label_7)
+        self.Label_Distance = QtWidgets.QLabel(self.formLayoutWidget)
+        self.Label_Distance.setObjectName("Label_Distance")
+        self.ParameterLayout.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.Label_Distance)
 
         #setup slider
         self.setSlider()
@@ -139,10 +173,18 @@ class MainWindow(QWidget):
 
     def initMenu(self):
         self._contextMenu = QMenu(self)
-        self.ac_getAllPara = self._contextMenu.addAction('回传所有参数', self.GetAllPara)
+        self.ac_getAllPara = self._contextMenu.addAction('回传所有参数', self.getAllPara)
 
-    def GetAllPara(self):
+    def getAllPara(self):
         self.checkcmd('###')
+
+
+    #在Label里显示即时信息
+    def showInstantPara(self,Angle,SpeedL,SpeedR,Distance):
+        self.Label_Angle.setText(str(Angle))
+        self.Label_SpeedL.setText(str(SpeedL))
+        self.Label_SpeedR.setText(str(SpeedR))
+        self.Label_Distance.setText(str(Distance))
 
     def initAnimation(self):
         # 按钮动画
