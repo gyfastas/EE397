@@ -34,6 +34,27 @@ Tb6612fng motorsDriver(STANDBY, MOTORL_IN1, MOTORL_IN2, PWML, MOTORR_IN1, MOTORR
 Bala myBala(mpu, kfr, kfp, motorsDriver, Wire);
 Flash myFlash(EEPROM_SIZE, EEPROM_FLAG);
 
+void showParaK(uint8_t K)
+{	
+	String info = "";
+	switch(K)
+	{
+        case 0 : info += "\r\nKp_B: ";        info += myBala.getParaK(0); 	break;
+        case 1 : info += "\r\nKd_B: ";        info += myBala.getParaK(1); 	break;
+        case 2 : info += "\r\nKp_V: ";        info += myBala.getParaK(2); 	break;
+        case 3 : info += "\r\nKi_V: ";        info += myBala.getParaK(3); 	break;
+        case 4 : info += "\r\nKd_V: ";        info += myBala.getParaK(4); 	break;
+        case 5 : info += "\r\nKp_T: ";        info += myBala.getParaK(5); 	break;
+        case 6 : info += "\r\nKi_T: ";        info += myBala.getParaK(6); 	break;
+        case 7 : info += "\r\nKd_T: ";        info += myBala.getParaK(7); 	break;
+        case 8 : info += "\r\nSDK: ";         info += myBala.getParaK(8); 	break;
+        case 9 : info += "\r\nTargetAngle: "; info += myBala.getParaK(9); 	break;
+        case 10: info += "\r\nVecPeriod: ";   info += myBala.getParaK(10); 	break;
+        case 11: info += "\r\nCarDown: ";     info += myBala.getParaK(11); 	break;
+		default:															break; 
+	}
+	client.println(info.c_str());
+}
 void WiFiConfig()
 {
 	static uint8_t connection_timeout_cnt = 0;
@@ -95,8 +116,10 @@ void remoteControl(void *parameter)
       cmd.trim();
       Serial.print("\nGet command: ");
       Serial.println(cmd);
-      if (cmd == String("#"))
-      {
+      if (cmd.substring(0,1) == String("#"))
+      {	
+		if cmd.length()<2 
+		{
         String info = "Angle: ";     info += myBala.getRoll();
         info += "\r\nKp_B: ";        info += myBala.getParaK(0);
         info += "\r\nKd_B: ";        info += myBala.getParaK(1);
@@ -115,10 +138,18 @@ void remoteControl(void *parameter)
         client.println(info.c_str());
         for (uint8_t i = 0; i < EEPROM_SIZE; ++i)
           Serial.println(myBala.getParaK(i));
+		}
+		else
+		{
+		K = cmd.substring(1).toInt()-1;
+		showParaK(K);
+		}
       }
+	  
       else
       {
       	uint8_t ty = cmd.indexOf('#') - 1;
+		
       	if (ty == 0)
         	myBala.setParaK((uint8_t)(cmd.substring(0,1).toInt() - 1), cmd.substring(1).toFloat());
         else if (ty == 1)
