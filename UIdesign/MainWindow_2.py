@@ -232,9 +232,7 @@ class MainWindow(QWidget):
 
     def on_socket_receive(self):
         try:
-
             mesg = self.sock.readAll()
-
             mesg = mesg.data().decode('utf-8')
             self.commandBrowser.insertPlainText('Received: '+mesg+'\n')
         except:
@@ -284,7 +282,7 @@ class MainWindow(QWidget):
 
 
     def sendBKP(self):
-        cmd_string = '#K1#'+self.BKDEdit.text()+'#'
+        cmd_string = '#K1#'+self.BKPEdit.text()+'#'
         self.checkcmd(cmd_string)
 
     def sendBKD(self):
@@ -292,15 +290,15 @@ class MainWindow(QWidget):
         self.checkcmd(cmd_string)
 
     def sendVKP(self):
-        cmd_string = '#K3#'+self.BKDEdit.text()+'#'
+        cmd_string = '#K3#'+self.VKPEdit.text()+'#'
         self.checkcmd(cmd_string)
 
     def sendVKI(self):
-        cmd_string = '#K4#'+self.BKDEdit.text()+'#'
+        cmd_string = '#K4#'+self.VKIEdit.text()+'#'
         self.checkcmd(cmd_string)
 
     def sendVKD(self):
-        cmd_string = '#K5#'+self.BKDEdit.text()+'#'
+        cmd_string = '#K5#'+self.VKDEdit.text()+'#'
         self.checkcmd(cmd_string)
 
     def upButtonClicked(self):
