@@ -94,10 +94,10 @@
   <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>40</y>
-     <width>581</width>
-     <height>390</height>
+     <x>620</x>
+     <y>20</y>
+     <width>431</width>
+     <height>341</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="controlLayout">
@@ -192,9 +192,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>480</y>
-     <width>581</width>
-     <height>241</height>
+     <y>20</y>
+     <width>601</width>
+     <height>701</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="commandLayout">

@@ -37,7 +37,7 @@ Protocol:
 	| ------------ | --------------- | -------------------------- |
 	| ###          | #\\r\\n         | show parameters            |
 	| #K<n>#<val># | <n>#<val>\\r\\n | set parameter <n> to <val> |
-
+	| #K<n>##	   | #<n>\\r\\n	     | show parameter <n>		  |
 	Notes: 
 	1. 'recv' refers to string received from remote controllers (PC, phone, etc)
 	2. 'send' refers to string sent to self-balance car 
@@ -85,6 +85,11 @@ def checkcmd_Bala(cmd):
 		return b'0'
 	else:
 		try:
+			if splits[2] =='':
+				cmd_out = '#'+str(para_list.index(splits[1]) + 1)+'\n\r'
+				return bytes(cmd_out,encoding = 'utf8')
+
+			else:
 			val = float(splits[2])
 			cmd_out = str(para_list.index(splits[1]) + 1) + '#' + str(val) + '\n\r'
 			return bytes(cmd_out, encoding = 'utf8')
