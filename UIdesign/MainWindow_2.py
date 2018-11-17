@@ -15,13 +15,13 @@ class MainWindow(QWidget):
     def __init__(self):
         super(MainWindow, self).__init__()
         #socket
+        self.GetParaTimer = QTimer()
         self.sock = QTcpSocket()
         self.isConnect = False
         self.setupUi()
         self.setupSlot()
         self.initMenu()
         self.initAnimation()
-
     def setupUi(self):
         self.resize(1069, 788)
         self.upButton = QtWidgets.QPushButton(self)
@@ -179,6 +179,14 @@ class MainWindow(QWidget):
         self.checkcmd('###')
 
 
+    def GetParaTimerTimeOutFunc(self):
+        print('Time out')
+        if self.isConnect ==False:
+            self.GetParaTimer.start(50)
+
+        else:
+            self.checkcmd('###')
+            self.GetParaTimer.start(50)
     #在Label里显示即时信息
     def showInstantPara(self,Angle,SpeedL,SpeedR,Distance):
         self.Label_Angle.setText(str(Angle))
@@ -196,6 +204,8 @@ class MainWindow(QWidget):
 
     def setupSlot(self):
         #Slot connect#
+        self.GetParaTimer.timeout.connect(self.GetParaTimerTimeOutFunc)
+
         self.Connect.clicked.connect(self.SockConnect)
         #按下回车时，发出指令
         self.CommandEdit.returnPressed.connect(self.WriteCommand)
@@ -305,6 +315,7 @@ class MainWindow(QWidget):
             mesg = self.sock.readAll()
             mesg = mesg.data().decode('utf-8')
             self.commandBrowser.insertPlainText('Received: '+mesg+'\n')
+
         except:
             print('error')
 

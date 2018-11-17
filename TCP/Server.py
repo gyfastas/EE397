@@ -35,7 +35,8 @@ Protocol:
 
 	| recv         | send            | meaning                    |
 	| ------------ | --------------- | -------------------------- |
-	| ###          | #\\r\\n         | show parameters            |
+	| ###          | #\\r\\n         | show All parameters        |
+	| ####		   | ##\\r\\n		 | show motion parameters     |
 	| #K<n>#<val># | <n>#<val>\\r\\n | set parameter <n> to <val> |
 	| #K<n>##	   | #<n>\\r\\n	     | show parameter <n>		  |
 	Notes: 
@@ -54,7 +55,7 @@ Protocol:
 		K10 -> Target_Angle
 		K11 -> Velocity_Period
 		K12 -> Car_Down_Angle_Limen
-
+		
 	eg. If receive #K2#0.2#, then send 20.2 to set parameter 2 (Balance_Kd) to 0.2.
 
 Commands:
@@ -79,6 +80,8 @@ def checkcmd_Bala(cmd):
 
 	para_list = ['K1', 'K2', 'K3', 'K4', 'K5', 'K6', 'K7', 'K8', 'K9', 'K10', 'K11', 'K12']
 
+	if len(splits) == 5 and all(i == '' for i in splits):
+		return b'##\n\r'
 	if len(splits) == 4 and all(i == '' for i in splits):
 		return b'#\n\r'
 	if len(splits) < 1 or len(splits) != 4 or splits[0] != '' or splits[1] not in para_list:
