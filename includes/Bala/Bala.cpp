@@ -44,21 +44,22 @@ Bala::Bala(MPU6050 &m, Kalman &kfr, Kalman &kfp, Tb6612fng &tb, TwoWire &w)
 
 	this->kal_timer = micros();
 
-	this->tarAngle = -4.7296;
+	this->tarAngle = 0;
 
-	this->Velocity_Period = 8;
+	this->Velocity_Period = 5;
 
 	this->Balance_Kp = 12.0;
-	this->Balance_Kd = 8.0;
-	this->Velocity_Kp = 0.5;
-	this->Velocity_Ki = 0.0025;
+	this->Balance_Kd = 10.0;
+	this->Velocity_Kp = 0.8;
+	this->Velocity_Ki = 0.004;
 	this->Velocity_Kd = 0;
 	this->Turn_Kp = 0;
 	this->Turn_Ki = 0;
 	this->Turn_Kd = 0;
 	this->Speed_Diff_K = 0;
-
-	this->cardown_limen = 40;
+	
+	this->cardown_limen = 30;
+	this->motor_dead_zone = 20;
 }
 
 void Bala::_constrain(int16_t &val, int16_t low, int16_t high)
@@ -95,6 +96,14 @@ void Bala::getAttitude()
 
 void Bala::setMotor(int16_t M1, int16_t M2)
 {
+	// Constrain the range
+	this->_constrain(M1, -250, +250); 
+	this->_constrain(M2, -250, +250); 
+
+	// Dead Zone
+	if (abs(M1) < this->motor_dead_zone) M1 = 0;
+	if (abs(M2) < this->motor_dead_zone) M2 = 0;
+
 	// Map PWM signals from [-255, +255] to [-1,+1]
 	this->motors->drive((float)(M1 / 255.0), (float)(M2 / 255.0)); 
 }
@@ -102,7 +111,7 @@ void Bala::setMotor(int16_t M1, int16_t M2)
 int16_t Bala::balance()
 {
 	int16_t balance = this->Balance_Kp * (this->roll - this->tarAngle) + this->Balance_Kd * this->gyroy;
-	return -balance;
+	return balance;
 }
 
 int16_t Bala::velocity(int16_t target)
@@ -155,15 +164,19 @@ void Bala::PIDController()
 	// blend loops
 	this->Motor1 = Balance_Pwm - Velocity_Pwm + Turn_Pwm - speed_diff_adjust;
 	this->Motor2 = Balance_Pwm - Velocity_Pwm - Turn_Pwm;
-
-	this->_constrain(this->Motor1, -250, +250); 
-	this->_constrain(this->Motor1, -250, +250); 
 }
 
 void Bala::begin()
 {
 	// Power on stabilizing ...
 	delay(500);
+
+	// Initialize adc
+	adcAttachPin(BATTERY_VOLTAGE_TEST);
+	adcStart(BATTERY_VOLTAGE_TEST);
+	analogReadResolution(10); 		// 10-bits resolution, maximum raw value is 1023
+	analogSetAttenuation(ADC_6db);  // at 6dB attenuation, the maximum voltage is 2.2V
+	pinMode(BATTERY_VOLTAGE_TEST, INPUT);
 
 	// Initialize encoder ...
 	pinMode(ENCODER_L, INPUT);
@@ -183,17 +196,22 @@ void Bala::begin()
 
 void Bala::run()
 {
-	static int Velocity_Count, Turn_Count;
+	static uint8_t Velocity_Count, Turn_Count, Voltage_Count;
+	static uint16_t Voltage_Sum;
 
 	// Attitude sample
 	this->getAttitude();
 
-	// Car down
-	if (abs(this->roll) > this->cardown_limen) 
-	{
-		this->setMotor(0, 0);
-		return;
-	}
+	// Battery voltage sample
+  	Voltage_Count++;                                   // counter for average
+  	Voltage_Sum += analogRead(BATTERY_VOLTAGE_TEST);   // sample battery voltage and integrate
+ 	if(Voltage_Count == 200)                           // calculate average
+ 	{
+ 		// voltage = sample / 1024 * VRef * 11, where VRef is 2.2V at 6dB attenuaton
+  		this->battery_voltage = Voltage_Sum * 0.00011816;
+  		Voltage_Sum = 0;
+  		Voltage_Count = 0;
+  	}
 
 	// Encoder sample
 	if (++Velocity_Count >= this->Velocity_Period)
@@ -203,8 +221,13 @@ void Bala::run()
 		Velocity_Count = 0;
 	}
 
-	// 
-
+	// Tip over or low battery voltage
+	if (abs(this->roll) > this->cardown_limen /*|| battery_voltage < 10.0*/) 
+	{
+		this->setMotor(0, 0);
+		return;
+	}
+	
 	// Compute PID
 	this->PIDController();
 

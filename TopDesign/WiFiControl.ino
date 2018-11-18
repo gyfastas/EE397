@@ -89,7 +89,13 @@ void remoteControl(void *parameter)
     { 
       if (cmd.length() < 2)
       {
-        String info = "Angle: ";     info += myBala.getRoll();
+        String info = "---------------------------------------";
+        info += "\r\nBattery: ";     info += myBala.getBatteryVoltage();
+        info += "\r\nAngle: ";       info += myBala.getRoll();
+        info += "\r\nDistance: ";    info += dist_cm;
+        info += "\r\nSpeedL: ";      info += myBala.getSpeedL();
+        info += "\r\nSpeedR: ";      info += myBala.getSpeedR();
+        info += "\r\n---------------------------------------";
         info += "\r\nKp_B: ";        info += myBala.getParaK(0);
         info += "\r\nKd_B: ";        info += myBala.getParaK(1);
         info += "\r\nKp_V: ";        info += myBala.getParaK(2);
@@ -102,8 +108,7 @@ void remoteControl(void *parameter)
         info += "\r\nTargetAngle: "; info += myBala.getParaK(9);
         info += "\r\nVecPeriod: ";   info += myBala.getParaK(10);
         info += "\r\nCarDown: ";     info += myBala.getParaK(11);
-        info += "\r\nSpeedL: ";      info += myBala.getSpeedL();
-        info += "\r\nSpeedR: ";      info += myBala.getSpeedR();
+        info += "\r\nDeadZone: ";    info += myBala.getParaK(12);
         client.println(info.c_str());
         for (uint8_t i = 0; i < EEPROM_SIZE; ++i)
           Serial.println(myBala.getParaK(i));
@@ -113,15 +118,11 @@ void remoteControl(void *parameter)
         showParaK(cmd.substring(1).toInt()-1);
       }
     }
-    
     else
     {
-    uint8_t ty = cmd.indexOf('#') - 1;
-    if (ty == 0)
-      myBala.setParaK((uint8_t)(cmd.substring(0,1).toInt() - 1), cmd.substring(1).toFloat());
-    else if (ty == 1)
-      myBala.setParaK((uint8_t)(cmd.substring(0,2).toInt() - 1), cmd.substring(2).toFloat());
-    myFlash.updateEEPROM(myBala);    
+      uint8_t ty = cmd.indexOf('#');
+      myBala.setParaK((uint8_t)(cmd.substring(0,ty).toInt() - 1), cmd.substring(ty + 1).toFloat());
+      myFlash.updateEEPROM(myBala);    
     }
   } 
   vTaskDelay(10);

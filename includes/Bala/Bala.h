@@ -11,6 +11,7 @@
 #define DIRECTION_L 0
 #define ENCODER_R 34
 #define DIRECTION_R 35
+#define BATTERY_VOLTAGE_TEST 36
 
 class Bala
 {
@@ -31,6 +32,8 @@ private:
 
 	int16_t speedL, speedR;
 
+	double battery_voltage;
+
 	uint8_t Velocity_Period;
 
 	double Balance_Kp, Balance_Kd;
@@ -39,6 +42,7 @@ private:
 	double Speed_Diff_K;
 
 	uint8_t cardown_limen;
+	uint8_t motor_dead_zone;
 
 	int16_t Motor1, Motor2;
 
@@ -65,6 +69,7 @@ public:
 	double getGyroY() { return gyroy; };
 	int16_t getSpeedL() { return speedL; };
 	int16_t getSpeedR() { return speedR; };
+	double getBatteryVoltage() { return battery_voltage; };
 	double getParaK(uint8_t idx)
 	{
 		switch(idx)
@@ -80,7 +85,8 @@ public:
 		case 8 : return Speed_Diff_K;	
 		case 9 : return tarAngle;
 		case 10 : return (double)Velocity_Period;
-		case 11: return (double)cardown_limen;
+		case 11 : return (double)cardown_limen;
+		case 12 : return (double)motor_dead_zone;
 		default: return 0; 
 		}		
 	}
@@ -100,7 +106,8 @@ public:
 		case 8 : Speed_Diff_K = val; break;
 		case 9 : tarAngle = val; break;
 		case 10 : Velocity_Period = (uint8_t)val; break;
-		case 11: cardown_limen = (uint8_t)val; break;
+		case 11 : cardown_limen = (uint8_t)val; break;
+		case 12 : motor_dead_zone = (uint8_t)val; break;
 		default: break;
 		}
 	}

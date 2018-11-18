@@ -28,3 +28,26 @@ void balaControl(void *parameter)
   vTaskDelete(NULL);  
 }
 
+
+/*************************************************************************/
+// Task2 :                Ultrasonic Distance Detection
+/*************************************************************************/
+
+void distDetection(void *parameter)
+{
+  // Initialize ...
+  mySonic.begin();
+  delay(500);
+
+  while(1)
+  {
+    static uint32_t detect_interval = millis() + 100;
+    if (millis() > detect_interval) 
+    {
+      detect_interval = millis() + 100;
+      dist_cm = mySonic.ping_cm();
+    }  
+    vTaskDelay(10); 
+  }
+  vTaskDelete(NULL);  
+}
