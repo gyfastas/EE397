@@ -1,17 +1,6 @@
 #include <WiFi.h>
 #include <WebServer.h>
 
-const char* ssid     = "ESP32-Access-Point";
-const char* password = "123456789";
-
-WebServer server(80);
-
-const char* www_username = "admin";
-const char* www_password = "LWYGN";
-// allows you to set the realm of authentication Default:"Login Required"
-const char* www_realm = "Custom Auth Realm";
-// the Content of the HTML response in case of Unautherized Access Default:empty
-String authFailResponse = "Authentication Failed";
 
 uint16_t testData = 0;
 String htmlIndex(double value = 0,int index = 0)
@@ -60,10 +49,6 @@ String htmlIndex(double value = 0,int index = 0)
   htmlIndex += "</body>\
 </html>";
   
-  
-
-
-
 
   return htmlIndex;
 }
@@ -187,15 +172,6 @@ void handleNotFound()
   server.send(404, "text/plain", message);
 }
 
-void inc(void *parameter)
-{
-  while(1)
-  {
-    testData += 1;
-    vTaskDelay(1000);
-  }
-  vTaskDelete(NULL);  
-}
 
 void handlePost()
 {

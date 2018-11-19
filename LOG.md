@@ -52,3 +52,25 @@ https://blog.csdn.net/jia666666/article/details/81534588 QSlider各个模块
 11:55
 
 连接上了服务器并且打印出了信息，接下来要做的是定协议，实现上位机和小车之间的WIFI通信
+
+
+
+
+
+### 11.19
+
+  Web [HTML] 可以利用表格显示小车参数
+
+```html
+<table border="1">
+<tr>
+<td>row 1, cell 1</td>
+<td>row 1, cell 2</td>
+</tr>
+<tr>
+<td>row 2, cell 1</td>
+<td>row 2, cell 2</td>
+</tr>
+</table>
+```
+
