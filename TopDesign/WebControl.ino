@@ -142,7 +142,7 @@ void handleUpdate()
 {
   if (!server.authenticate(www_username, www_password))
     return server.requestAuthentication(DIGEST_AUTH, www_realm, authFailResponse); 
-  server.send(200, "application/json", "{\"testData\": " + String(testData) + "}");  
+  server.send(200, "text/html",htmlIndex());  
   
 
 }
