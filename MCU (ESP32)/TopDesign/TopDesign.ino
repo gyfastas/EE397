@@ -7,7 +7,7 @@
 #include <Bala.h>
 #include <Flash.h>
 #include <Ultrasonic.h>
-
+#include <WebServer.h>
 #define EEPROM_SIZE 13
 #define EEPROM_FLAG 0x02
 
@@ -24,15 +24,18 @@
 #define SONIC_DIST_CM 500
 
 #define NUMSSID 2
-const String ssid[NUMSSID] = { "WiFiSSID1", "WiFiSSID2" };
-const String pswd[NUMSSID] = { "WiFiPSWD1", "WiFiPSWD2:" };
+const char* ssid     = "ESP32-Access-Point";
+const char* password = "123456789";
 
-const char* host     = "RemoteServerHost";
-const int   hostPort = 80;
+WebServer server(80);
 
-const char* TCPCert  = "Username and password";
+const char* www_username = "admin";
+const char* www_password = "LWYGN";
+// allows you to set the realm of authentication Default:"Login Required"
+const char* www_realm = "Custom Auth Realm";
+// the Content of the HTML response in case of Unautherized Access Default:empty
+String authFailResponse = "Authentication Failed";
 
-WiFiClient client;
 MPU6050 mpu;
 Kalman kfr, kfp;
 Tb6612fng motorsDriver(STANDBY, MOTORL_IN1, MOTORL_IN2, PWML, MOTORR_IN1, MOTORR_IN2, PWMR);
@@ -52,11 +55,7 @@ void setup()
   Wire.begin(/*SDA*/21, /*SCL*/22);
   Wire.setClock(400000UL);          // Set I2C frequency to 400kHz
   delay(500);
-
-  // Start Serial for diplay debug message
-  Serial.begin(115200);
-  delay(500);
-
+  
   // Create a task on RTOS for self-balance car control
   xTaskCreatePinnedToCore(
     balaControl,          /* Task function. */
@@ -76,19 +75,20 @@ void setup()
     3,                    /* Priority of the task. */
     NULL,                 /* Task handle. */
     0);                   /* Run on core 0. */ 
-
+	
   // Create a task on RTOS for WiFi event
   xTaskCreatePinnedToCore(
-    remoteControl,        /* Task function. */
-    "remoteControl",      /* String with name of task. */
+    WiFiControl,        /* Task function. */
+    "WiFiControl",      /* String with name of task. */
     10000,                /* Stack size in words. */
     NULL,                 /* Parameter passed as input of the task */
     1,                    /* Priority of the task. */
     NULL,                 /* Task handle. */
     0);                   /* Run on core 0. */
+  
 }
 
-void loop() 
+void loop()
 {
-
+	
 }
