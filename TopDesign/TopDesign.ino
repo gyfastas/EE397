@@ -55,19 +55,6 @@ void setup()
   Wire.begin(/*SDA*/21, /*SCL*/22);
   Wire.setClock(400000UL);          // Set I2C frequency to 400kHz
   delay(500);
-  WiFi.softAP(ssid, password);
-  
-  server.on("/", handleRoot);
-  server.on("/update", handleUpdate);
-  server.on("/Control",HTTP_POST,handlePost);
-  server.onNotFound(handleNotFound);
-  
-  server.begin();
-
-  Serial.println(String("Open http://") + WiFi.softAPIP() + " in your browser to see it working.");
-  // Start Serial for diplay debug message
-  Serial.begin(115200);
-  delay(500);
   
   // Create a task on RTOS for self-balance car control
   xTaskCreatePinnedToCore(
@@ -91,8 +78,8 @@ void setup()
 	
   // Create a task on RTOS for WiFi event
   xTaskCreatePinnedToCore(
-    server.handleClient(),        /* Task function. */
-    "handleClient",      /* String with name of task. */
+    WiFiControl,        /* Task function. */
+    "WiFiControl",      /* String with name of task. */
     10000,                /* Stack size in words. */
     NULL,                 /* Parameter passed as input of the task */
     1,                    /* Priority of the task. */
