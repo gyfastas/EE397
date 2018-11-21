@@ -35,6 +35,8 @@ TODO
 
 ## License
 
+[GPL-2.0 license](https://github.com/gyfastas/EE397/blob/master/LICENSE)
+
 
 
 

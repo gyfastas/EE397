@@ -1,3 +1,20 @@
+/* Copyright (C) 2018 Charles. All rights reserved.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
 #include <Wire.h>
 #include <WiFi.h>
 #include <EEPROM.h>
@@ -8,6 +25,7 @@
 #include <Flash.h>
 #include <Ultrasonic.h>
 #include <WebServer.h>
+
 #define EEPROM_SIZE 13
 #define EEPROM_FLAG 0x02
 
@@ -62,27 +80,27 @@ void setup()
     "balaControl",        /* String with name of task. */
     10000,                /* Stack size in words. */
     NULL,                 /* Parameter passed as input of the task */
-    2,                    /* Priority of the task. */
+    3,                    /* Priority of the task. */
     NULL,                 /* Task handle. */
     1);                   /* Run on core 1. */
 
   // Create a task on RTOS for ultrasonic distance detection
   xTaskCreatePinnedToCore(
-    distDetection,       /* Task function. */
-    "distDetection",     /* String with name of task. */
-    1000,                  /* Stack size in words. */
+    distDetection,        /* Task function. */
+    "distDetection",      /* String with name of task. */
+    1000,                 /* Stack size in words. */
     NULL,                 /* Parameter passed as input of the task */
-    3,                    /* Priority of the task. */
+    1,                    /* Priority of the task. */
     NULL,                 /* Task handle. */
     0);                   /* Run on core 0. */ 
 	
   // Create a task on RTOS for WiFi event
   xTaskCreatePinnedToCore(
-    WiFiControl,        /* Task function. */
-    "WiFiControl",      /* String with name of task. */
+    WiFiControl,          /* Task function. */
+    "WiFiControl",        /* String with name of task. */
     10000,                /* Stack size in words. */
     NULL,                 /* Parameter passed as input of the task */
-    1,                    /* Priority of the task. */
+    2,                    /* Priority of the task. */
     NULL,                 /* Task handle. */
     0);                   /* Run on core 0. */
   
