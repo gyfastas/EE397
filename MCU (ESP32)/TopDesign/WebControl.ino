@@ -55,10 +55,10 @@ String htmlIndex(double value = 0,int index = 0)
         <p>TKD:<input id=\"8\" name=\"8\" type=\"text\" /></p>  \
         <p><input id=\"subControl\"  name =\"subControl\" type=\"submit\" value=\"Submit\" /></p> \
     </form>\ ";
-  htmlIndex += "<table border =\"2\">  <tr> <td> Angle:<span id = 'Angle'></span>" + String(myBala.getRoll()) + "</td> <td>SpeedL:<span id='SpeedL'></span>" + String(myBala.getSpeedL()) + "</td> <td> SpeedR:<span id = 'SpeedR'></span>" + String(myBala.getSpeedR()) + "</td> </tr> <tr> <td><span id='K0'></span>" + String(myBala.getParaK(0)) + "</td> <td><span id = 'K1'></span>" + String(myBala.getParaK(1)) + "</td> <td><span id = 'K2'></span>" + String(myBala.getParaK(2)) + "</td> </tr> <tr> <td><span id = 'K3'></span>" + String(myBala.getParaK(3)) + "</td> <td><span id = 'K4'></span>" + String(myBala.getParaK(4)) + "</td> <td><span id = 'K5'></span>" + String(myBala.getParaK(5)) + "</td> </tr> <tr> <td><span id = 'K6'></span>" + String(myBala.getParaK(6)) + "</td> <td><span id = 'K7'></span>" + String(myBala.getParaK(7)) + "</td> <td><span id = 'K8'></span>" + String(myBala.getParaK(8)) + "</td> </tr> <tr> <td><span id = 'K9'></span>" + String(myBala.getParaK(9)) + "</td> <td><span id = 'K10'></span>" + String(myBala.getParaK(10)) + "</td> <td><span id = 'K11'></span>" + String(myBala.getParaK(11)) + "</td> </tr>" + "</table>";
+  htmlIndex += "<table border =\"2\">  <tr> <td> Angle:<span style = 'width = 100px;max-width:110px; float:left;' id = 'Angle'></span> </td> <td>SpeedL:<span style = 'width = 100px;max-width:110px; float:left;' id='SpeedL'></span></td> <td> SpeedR:<span style = 'width = 100px;max-width:110px; float:left;'  id = 'SpeedR'></span> </td> </tr> <tr> <td><span id='K0'></span>" + String(myBala.getParaK(0),4) + "</td> <td><span id = 'K1'></span>" + String(myBala.getParaK(1),4) + "</td> <td><span id = 'K2'></span>" + String(myBala.getParaK(2),4) + "</td> </tr> <tr> <td><span id = 'K3'></span>" + String(myBala.getParaK(3),4) + "</td> <td><span id = 'K4'></span>" + String(myBala.getParaK(4),4) + "</td> <td><span id = 'K5'></span>" + String(myBala.getParaK(5),4) + "</td> </tr> <tr> <td><span id = 'K6'></span>" + String(myBala.getParaK(6),4) + "</td> <td><span id = 'K7'></span>" + String(myBala.getParaK(7),4) + "</td> <td><span id = 'K8'></span>" + String(myBala.getParaK(8),4) + "</td> </tr> <tr> <td><span id = 'K9'></span>" + String(myBala.getParaK(9),4) + "</td> <td><span id = 'K10'></span>" + String(myBala.getParaK(10),4) + "</td> <td><span id = 'K11'></span>" + String(myBala.getParaK(11),4) + "</td> </tr>" + "</table>";
   htmlIndex += " <script>\
    requestData(); \
-   setInterval(requestData, 400);\
+   setInterval(requestData, 200);\
    function requestData() {\
      var xhr = new XMLHttpRequest();\
      xhr.open('GET', '/update');\
@@ -66,29 +66,23 @@ String htmlIndex(double value = 0,int index = 0)
        if (xhr.status === 200) {\
          if (xhr.responseText) {\
            var data = JSON.parse(xhr.responseText);\
-           document.getElementById(\"BKP\").innerText = data.BKP;\
-           document.getElementById(\"BKD\").innerText = data.BKD;\
-           document.getElementById(\"VKP\").innerText = data.VKP;\
-           document.getElementById(\"VKI\").innerText = data.VKI;\
-           document.getElementById(\"VKD\").innerText = data.VKD;\
+           document.getElementById(\"Angle\").innerText = data.Angle;\
+           document.getElementById(\"SpeedL\").innerText = data.SpeedL;\
+           document.getElementById(\"SpeedR\").innerText = data.SpeedR;\
          } else {\
-           document.getElementById(\"BKP\").innerText = \"?\";\
-			      document.getElementById(\"BKD\").innerText = \"?\";\
-           document.getElementById(\"VKP\").innerText = \"?\";\
-           document.getElementById(\"VKI\").innerText = \"?\";\
-           document.getElementById(\"VKD\").innerText = \"?\";\
+           document.getElementById(\"Angle\").innerText = \"0.0000\";\
+           document.getElementById(\"SpeedL\").innerText = \"0.0000\";\
+           document.getElementById(\"SpeedR\").innerText = \"0.0000\";\
          }\
        } else {\
-           document.getElementById(\"BKP\").innerText = \"?\";\
-			document.getElementById(\"BKD\").innerText = \"?\";\
-           document.getElementById(\"VKP\").innerText = \"?\";\
-           document.getElementById(\"VKI\").innerText = \"?\";\
-           document.getElementById(\"VKD\").innerText = \"?\";\
+           document.getElementById(\"Angle\").innerText = \"0.0000\";\
+           document.getElementById(\"SpeedL\").innerText = \"0.0000\";\
+           document.getElementById(\"SpeedR\").innerText = \"0.0000\";\
        }\
      };\
      xhr.send();\
    }\
- </script>\";
+ </script>";
 
 	  htmlIndex += "</body>\
 </html>";
@@ -106,8 +100,9 @@ void handleRoot()
 void handleUpdate()
 {
 	if (!server.authenticate(www_username, www_password))
-		return server.requestAuthentication(DIGEST_AUTH, www_realm, authFailResponse); 
-	server.send(200, "text/html",htmlIndex());  
+		return server.requestAuthentication(DIGEST_AUTH, www_realm, authFailResponse);
+
+  server.send(200, "application/json", "{\"Angle\": " + String() +"," "\"SpeedL\": "+String(myBala.getSpeedL(),4) + "," + "\"SpeedR\": "+String(myBala.getSpeedR(),4)+"}");
 }
 
 void handleControl()
@@ -135,13 +130,6 @@ void handleNotFound()
 	server.send(404, "text/plain", message);
 }
 
-void handleUpdate()
-{
-	if (!server.authenticate(www_username, www_password))
-		return server.requestAuthentication(DIGEST_AUTH, www_realm, authFailResponse);
-
-	
-}
 void handlePost()
 {
 	if (!server.authenticate(www_username, www_password))
@@ -160,10 +148,9 @@ void WiFiControl(void *parameter)
 	WiFi.softAP(ssid, password);
 
 	server.on("/", handleRoot);
-	server.on("/update", handleUpdate);
+	server.on("/Control", handleUpdate);
 	server.on("/Control",HTTP_POST,handlePost);
 	server.onNotFound(handleNotFound);
-
 	server.begin();
 
 	Serial.println(String("Open http://") + WiFi.softAPIP() + " in your browser to see it working.");
