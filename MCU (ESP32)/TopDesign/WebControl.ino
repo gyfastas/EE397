@@ -71,7 +71,7 @@ String htmlIndex()
 
   htmlIndex += " <script>\
    requestData(); \
-   setInterval(requestData, 200);\
+   setInterval(requestData, 500);\
    function requestData() {\
      var xhr = new XMLHttpRequest();\
      xhr.open('GET', '/Update');\
@@ -160,6 +160,7 @@ void WiFiControl(void *parameter)
 
   server.on("/", handleRoot);
   server.on("/Update", handleUpdate);
+  server.on("/Control",HTTP_GET,handleRoot);
   server.on("/Control",HTTP_POST,handleControl);
   server.onNotFound(handleNotFound);
   server.begin();

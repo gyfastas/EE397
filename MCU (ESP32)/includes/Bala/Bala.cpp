@@ -66,17 +66,17 @@ Bala::Bala(MPU6050 &m, Kalman &kfr, Kalman &kfp, Tb6612fng &tb, TwoWire &w)
 
 	this->Velocity_Period = 5;
 
-	this->Balance_Kp = 12.0;
-	this->Balance_Kd = 10.0;
-	this->Velocity_Kp = 0.8;
-	this->Velocity_Ki = 0.004;
+	this->Balance_Kp = 10.0;
+	this->Balance_Kd = 0.8;
+	this->Velocity_Kp = 1;
+	this->Velocity_Ki = 0.001;
 	this->Velocity_Kd = 0;
 	this->Turn_Kp = 0;
 	this->Turn_Ki = 0;
 	this->Turn_Kd = 0;
 	this->Speed_Diff_K = 0;
 	
-	this->cardown_limen = 30;
+	this->cardown_limen = 35;
 	this->motor_dead_zone = 20;
 }
 
@@ -98,8 +98,8 @@ void Bala::getAttitude()
 	double newroll  = atan(ay / sqrt(ax * ax + az * az)) * 57.296;
 	double newpitch = atan2(-ax, az) * 57.296;
 #endif
-	this->gyrox = gx / 131.0;
-	this->gyroy = gy / 131.0;
+	this->gyrox = gx / 131.0 + 3.74;
+	this->gyroy = gy / 131.0 - 1.90;
 	this->gyroz = gz / 131.0;
 
 	// Cal delta time
@@ -128,7 +128,7 @@ void Bala::setMotor(int16_t M1, int16_t M2)
 
 int16_t Bala::balance()
 {
-	int16_t balance = this->Balance_Kp * (this->roll - this->tarAngle) + this->Balance_Kd * this->gyroy;
+	int16_t balance = this->Balance_Kp * (this->roll - this->tarAngle) + this->Balance_Kd * this->gyrox;
 	return balance;
 }
 
@@ -190,12 +190,10 @@ void Bala::begin()
 	delay(500);
 
 	// Initialize adc
-	// adcAttachPin(BATTERY_VOLTAGE_TEST);
-	// adcStart(BATTERY_VOLTAGE_TEST);
-	// analogReadResolution(10); 		// 10-bits resolution, maximum raw value is 1023
-	// analogSetAttenuation(ADC_6db);  // at 6dB attenuation, the maximum voltage is 2.2V
-	adc1_config_width(ADC_WIDTH_BIT_10);
-    adc1_config_channel_atten(ADC1_CHANNEL_0,ADC_ATTEN_DB_0);
+	adcAttachPin(BATTERY_VOLTAGE_TEST);
+	adcStart(BATTERY_VOLTAGE_TEST);
+	analogReadResolution(10);       // 10-bits resolution, maximum raw value is 1023
+	analogSetAttenuation(ADC_6db);  // at 6dB attenuation, the maximum voltage is 2.2V
 
 	// Initialize encoder ...
 	pinMode(ENCODER_L, INPUT);
@@ -222,16 +220,16 @@ void Bala::run()
 	this->getAttitude();
 
 	// Battery voltage sample
-  	Voltage_Count++;                                   // counter for average
-  	// Voltage_Sum += analogRead(BATTERY_VOLTAGE_TEST);   // sample battery voltage and integrate
-  	Voltage_Sum += adc1_get_voltage(ADC1_CHANNEL_0);
- 	if(Voltage_Count == 200)                           // calculate average
- 	{
-		// voltage = sample / 1024 * VRef * 11, where VRef is 1.1V
-		battery_voltage = Voltage_Sum * 0.000059082;
-  		Voltage_Sum = 0;
-  		Voltage_Count = 0;
-  	}
+	Voltage_Count++;                                   // counter for average
+	Voltage_Sum += analogRead(BATTERY_VOLTAGE_TEST);   // sample battery voltage and integrate
+	if(Voltage_Count == 200)                           // calculate average
+	{
+		Voltage_Sum /= 200; 
+		// voltage = sample / 1024 * VRef * 11, where VRef is 2.2V(ideal) at 6dB attenuation, in real, we set VRef = 1.75V
+		this->battery_voltage = Voltage_Sum * 0.0187988;
+		Voltage_Sum = 0;
+		Voltage_Count = 0;
+	}
 
 	// Encoder sample
 	if (++Velocity_Count >= this->Velocity_Period)
