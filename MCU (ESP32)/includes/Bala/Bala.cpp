@@ -16,6 +16,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 #include "Bala.h"
+#include <driver/adc.h>
 
 #define RESTRICT_PITCH
 
@@ -189,11 +190,12 @@ void Bala::begin()
 	delay(500);
 
 	// Initialize adc
-	adcAttachPin(BATTERY_VOLTAGE_TEST);
-	adcStart(BATTERY_VOLTAGE_TEST);
-	analogReadResolution(10); 		// 10-bits resolution, maximum raw value is 1023
-	analogSetAttenuation(ADC_6db);  // at 6dB attenuation, the maximum voltage is 2.2V
-	pinMode(BATTERY_VOLTAGE_TEST, INPUT);
+	// adcAttachPin(BATTERY_VOLTAGE_TEST);
+	// adcStart(BATTERY_VOLTAGE_TEST);
+	// analogReadResolution(10); 		// 10-bits resolution, maximum raw value is 1023
+	// analogSetAttenuation(ADC_6db);  // at 6dB attenuation, the maximum voltage is 2.2V
+	adc1_config_width(ADC_WIDTH_BIT_10);
+    adc1_config_channel_atten(ADC1_CHANNEL_0,ADC_ATTEN_DB_0);
 
 	// Initialize encoder ...
 	pinMode(ENCODER_L, INPUT);
@@ -214,18 +216,19 @@ void Bala::begin()
 void Bala::run()
 {
 	static uint8_t Velocity_Count, Turn_Count, Voltage_Count;
-	static uint16_t Voltage_Sum;
+	static uint32_t Voltage_Sum;
 
 	// Attitude sample
 	this->getAttitude();
 
 	// Battery voltage sample
   	Voltage_Count++;                                   // counter for average
-  	Voltage_Sum += analogRead(BATTERY_VOLTAGE_TEST);   // sample battery voltage and integrate
+  	// Voltage_Sum += analogRead(BATTERY_VOLTAGE_TEST);   // sample battery voltage and integrate
+  	Voltage_Sum += adc1_get_voltage(ADC1_CHANNEL_0);
  	if(Voltage_Count == 200)                           // calculate average
  	{
- 		// voltage = sample / 1024 * VRef * 11, where VRef is 2.2V at 6dB attenuaton
-  		this->battery_voltage = Voltage_Sum * 0.00011816;
+		// voltage = sample / 1024 * VRef * 11, where VRef is 1.1V
+		battery_voltage = Voltage_Sum * 0.000059082;
   		Voltage_Sum = 0;
   		Voltage_Count = 0;
   	}

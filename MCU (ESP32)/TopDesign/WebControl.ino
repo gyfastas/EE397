@@ -1,4 +1,4 @@
-/* Copyright (C) 2018 gyfastas. All rights reserved.
+/* Copyright (C) 2018 gyfastas, Charles. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,151 +18,163 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <WiFi.h>
 #include <WebServer.h>
 
-uint16_t testData = 0;
-String htmlIndex(double value = 0,int index = 0)
+String htmlGenerateOneParameter(uint8_t id, String name, uint8_t precision)
 {
-  String htmlIndex = "";
-  htmlIndex += "<!DOCTYPE html><html><head>Charles</head><body>";
-  htmlIndex += "<form id=\"1\" name=\"1\" method =\"post\" action=\"Control\" >  \
-        <p>BKP:<input id=\"1\" name=\"1\" type=\"text\" /></p>  \
-        <p><input id=\"subControl\"  name =\"subControl\" type=\"submit\" value=\"Submit\" /></p> \
-    </form>\ ";
-  htmlIndex +=  "<form id=\"2\" name=\"2\" method =\"post\"  action=\"Control\">  \
-        <p>BKD:<input id=\"2\" name=\"2\" type=\"text\" /></p>  \
-        <p><input id=\"subControl\"  name =\"subControl\" type=\"submit\" value=\"Submit\" /></p> \
-    </form>";
-  htmlIndex += "<form id=\"3\" name=\"3\" method =\"post\"  action=\"Control\">  \
-        <p>VKP:<input id=\"3\" name=\"3\" type=\"text\" /></p>  \
-        <p><input id=\"subControl\"  name =\"subControl\" type=\"submit\" value=\"Submit\" /></p> \
-    </form>";
-  htmlIndex += "<form id=\"4\" name=\"4\" method =\"post\"  action=\"Control\">  \
-        <p>VKI:<input id=\"4\" name=\"4\" type=\"text\" /></p>  \
-        <p><input id=\"subControl\"  name =\"subControl\" type=\"submit\" value=\"Submit\" /></p> \
-    </form>\ ";
-  htmlIndex += "<form id=\"5\" name=\"5\" method =\"post\"  action=\"Control\">  \
-        <p>VKD:<input id=\"5\" name=\"5\" type=\"text\" /></p>  \
-        <p><input id=\"subControl\"  name =\"subControl\" type=\"submit\" value=\"Submit\" /></p> \
-    </form>\ ";
-  htmlIndex += "    <form id=\"6\" name=\"6\" method =\"post\"  action=\"Control\">  \
-        <p>TKP:<input id=\"6\" name=\"6\" type=\"text\" /></p>  \
-        <p><input id=\"subControl\"  name =\"subControl\" type=\"submit\" value=\"Submit\" /></p> \
-    </form>\ ";
-  htmlIndex += " <form id=\"7\" name=\"7\" method =\"post\"  action=\"Control\">  \
-        <p>TKI:<input id=\"7\" name=\"7\" type=\"text\" /></p>  \
-        <p><input id=\"subControl\"  name =\"subControl\" type=\"submit\" value=\"Submit\" /></p> \
-    </form>";
-  htmlIndex += "<form id=\"8\" name=\"8\" method =\"post\"  action=\"Control\">  \
-        <p>TKD:<input id=\"8\" name=\"8\" type=\"text\" /></p>  \
-        <p><input id=\"subControl\"  name =\"subControl\" type=\"submit\" value=\"Submit\" /></p> \
-    </form>\ ";
-  htmlIndex += "<table border =\"2\">  <tr> <td> Angle:<span style = 'width = 100px;max-width:110px; float:left;' id = 'Angle'></span> </td> <td>SpeedL:<span style = 'width = 100px;max-width:110px; float:left;' id='SpeedL'></span></td> <td> SpeedR:<span style = 'width = 100px;max-width:110px; float:left;'  id = 'SpeedR'></span> </td> </tr> <tr> <td><span id='K0'></span>" + String(myBala.getParaK(0),4) + "</td> <td><span id = 'K1'></span>" + String(myBala.getParaK(1),4) + "</td> <td><span id = 'K2'></span>" + String(myBala.getParaK(2),4) + "</td> </tr> <tr> <td><span id = 'K3'></span>" + String(myBala.getParaK(3),4) + "</td> <td><span id = 'K4'></span>" + String(myBala.getParaK(4),4) + "</td> <td><span id = 'K5'></span>" + String(myBala.getParaK(5),4) + "</td> </tr> <tr> <td><span id = 'K6'></span>" + String(myBala.getParaK(6),4) + "</td> <td><span id = 'K7'></span>" + String(myBala.getParaK(7),4) + "</td> <td><span id = 'K8'></span>" + String(myBala.getParaK(8),4) + "</td> </tr> <tr> <td><span id = 'K9'></span>" + String(myBala.getParaK(9),4) + "</td> <td><span id = 'K10'></span>" + String(myBala.getParaK(10),4) + "</td> <td><span id = 'K11'></span>" + String(myBala.getParaK(11),4) + "</td> </tr>" + "</table>";
+  String div = String("<div style = \"margin-bottom:30px;\"><div style = \"float:left;margin-right:10px;\"><form id=\"")
+  + String(id)
+  + String("\" name=\"")
+  + String(id)
+  + String("\" method =\"post\" action=\"Control\">")
+  + name 
+  + String("  <input id=\"")
+  + String(id)
+  + String("\" name=\"")
+  + String(id)
+  + String("\" type=\"text\" /><input id=\"subControl\" name =\"subControl\" type=\"submit\" value=\"Submit\" /></form></div>")
+  + String("<div style = \"float:left;\"><span id = 'K")
+  + String(id-1)
+  + String("'></span>") 
+  + String(myBala.getParaK(id-1),precision) 
+  + String("</div></div></br>");
+  return div;  
+}
+
+String htmlIndex()
+{
+  String htmlIndex = "<!DOCTYPE html><html><head><h5>Bala Remote Control</h5></head><body>";
+
+  htmlIndex += "<div>";
+
+  htmlIndex += "<div style = \"margin-top:10px;margin-bottom:10px;\"><table border =\"2\"><tr> \
+  <td width = \"100\">Battery:<span id = 'Battery'></span></td> \
+  <td width = \"100\">Angle:<span id = 'Angle'></span></td> \
+  <td width = \"100\">SpeedL:<span id = 'SpeedL'></span></td> \
+  <td width = \"100\">SpeedR:<span id = 'SpeedR'></span></td> \
+  <td width = \"100\">Dist:<span id = 'Distance'></span></td> \
+  </tr></table></div></br>";
+
+  htmlIndex += htmlGenerateOneParameter(1, String("BKP"), 4);
+  htmlIndex += htmlGenerateOneParameter(2, String("BKD"), 4);
+  htmlIndex += htmlGenerateOneParameter(3, String("VKP"), 4);
+  htmlIndex += htmlGenerateOneParameter(4, String("VKI"), 4);
+  htmlIndex += htmlGenerateOneParameter(5, String("VKD"), 4);
+  htmlIndex += htmlGenerateOneParameter(6, String("TKP"), 4);
+  htmlIndex += htmlGenerateOneParameter(7, String("TKI"), 4);
+  htmlIndex += htmlGenerateOneParameter(8, String("TKD"), 4);
+  htmlIndex += htmlGenerateOneParameter(9, String("SDK"), 4);
+  htmlIndex += htmlGenerateOneParameter(10, String("TarAngle"), 2);
+  htmlIndex += htmlGenerateOneParameter(11, String("VecPeriod"), 0);
+  htmlIndex += htmlGenerateOneParameter(12, String("Cardown"), 0);
+  htmlIndex += htmlGenerateOneParameter(13, String("MDZ"), 2);
+
+  htmlIndex += "</div>";
+
   htmlIndex += " <script>\
    requestData(); \
    setInterval(requestData, 200);\
    function requestData() {\
      var xhr = new XMLHttpRequest();\
-     xhr.open('GET', '/update');\
+     xhr.open('GET', '/Update');\
      xhr.onload = function() {\
        if (xhr.status === 200) {\
          if (xhr.responseText) {\
            var data = JSON.parse(xhr.responseText);\
+           document.getElementById(\"Battery\").innerText = data.Battery;\
            document.getElementById(\"Angle\").innerText = data.Angle;\
            document.getElementById(\"SpeedL\").innerText = data.SpeedL;\
            document.getElementById(\"SpeedR\").innerText = data.SpeedR;\
+           document.getElementById(\"Distance\").innerText = data.Distance;\
          } else {\
+           document.getElementById(\"Battery\").innerText = \"0.0000\";\
            document.getElementById(\"Angle\").innerText = \"0.0000\";\
            document.getElementById(\"SpeedL\").innerText = \"0.0000\";\
            document.getElementById(\"SpeedR\").innerText = \"0.0000\";\
+           document.getElementById(\"Distance\").innerText = \"0.0000\";\
          }\
        } else {\
+           document.getElementById(\"Battery\").innerText = \"0.0000\";\
            document.getElementById(\"Angle\").innerText = \"0.0000\";\
            document.getElementById(\"SpeedL\").innerText = \"0.0000\";\
            document.getElementById(\"SpeedR\").innerText = \"0.0000\";\
+           document.getElementById(\"Distance\").innerText = \"0.0000\";\
        }\
      };\
      xhr.send();\
    }\
  </script>";
 
-	  htmlIndex += "</body>\
-</html>";
+    htmlIndex += "</body></html>";
 
   return htmlIndex;
 }
 
 void handleRoot()
 {
-	if (!server.authenticate(www_username, www_password))
-		return server.requestAuthentication(DIGEST_AUTH, www_realm, authFailResponse);
-	server.send(200, "text/html", htmlIndex(0,0));
+  if (!server.authenticate(www_username, www_password))
+    return server.requestAuthentication(DIGEST_AUTH, www_realm, authFailResponse);
+
+  server.send(200, "text/html", htmlIndex());
 }
 
 void handleUpdate()
 {
-	if (!server.authenticate(www_username, www_password))
-		return server.requestAuthentication(DIGEST_AUTH, www_realm, authFailResponse);
+  if (!server.authenticate(www_username, www_password))
+    return server.requestAuthentication(DIGEST_AUTH, www_realm, authFailResponse);
 
-  server.send(200, "application/json", "{\"Angle\": " + String() +"," "\"SpeedL\": "+String(myBala.getSpeedL(),4) + "," + "\"SpeedR\": "+String(myBala.getSpeedR(),4)+"}");
+  server.send(200, "application/json",
+     "{\"Battery\": " + String(myBala.getBatteryVoltage(),2) + ","
+    + "\"Angle\": " + String(myBala.getRoll(),2) + "," 
+    + "\"SpeedL\": " + String(myBala.getSpeedL()) + "," 
+    + "\"SpeedR\": " + String(myBala.getSpeedR()) + ","
+    + "\"Distance\": " + String(dist_cm) + "}");
 }
 
 void handleControl()
 {
-	if (!server.authenticate(www_username, www_password))
-    return server.requestAuthentication(DIGEST_AUTH, www_realm, authFailResponse); 
+  if (!server.authenticate(www_username, www_password))
+    return server.requestAuthentication(DIGEST_AUTH, www_realm, authFailResponse);
 
-	String mess = "";
-	mess +=server.uri();
-	Serial.println(mess);
-	
+  myBala.setParaK((uint8_t)(server.argName(0)).toInt()-1,server.arg(0).toFloat());
+  myFlash.updateEEPROM(myBala);
+  server.send(200, "text/html", htmlIndex());
 }
+
 void handleNotFound() 
 {
-	String message = "File Not Found\n\n";
-	message += "URI: ";
-	message += server.uri();
-	message += "\nMethod: ";
-	message += (server.method() == HTTP_GET) ? "GET" : "POST";
-	message += "\nArguments: ";
-	message += server.args();
-	message += "\n";
-	for (uint8_t i = 0; i < server.args(); i++)
-		message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
-	server.send(404, "text/plain", message);
+  String message = "File Not Found\n\n";
+  message += "URI: ";
+  message += server.uri();
+  message += "\nMethod: ";
+  message += (server.method() == HTTP_GET) ? "GET" : "POST";
+  message += "\nArguments: ";
+  message += server.args();
+  message += "\n";
+  for (uint8_t i = 0; i < server.args(); i++)
+    message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
+  server.send(404, "text/plain", message);
 }
-
-void handlePost()
-{
-	if (!server.authenticate(www_username, www_password))
-		return server.requestAuthentication(DIGEST_AUTH, www_realm, authFailResponse);
-
-	myBala.setParaK((uint8_t)(server.argName(0)).toInt()-1,server.arg(0).toFloat());
-	String message = "";
-	message += " " + server.argName(0) + ": " + server.arg(0) + "\n"; 
-	server.send(200, "text/html", htmlIndex(0,0));
-	Serial.print(message);
-}
-
 
 void WiFiControl(void *parameter)
 {
-	WiFi.softAP(ssid, password);
+  WiFi.softAP(ssid, password);
 
-	server.on("/", handleRoot);
-	server.on("/Control", handleUpdate);
-	server.on("/Control",HTTP_POST,handlePost);
-	server.onNotFound(handleNotFound);
-	server.begin();
+  server.on("/", handleRoot);
+  server.on("/Update", handleUpdate);
+  server.on("/Control",HTTP_POST,handleControl);
+  server.onNotFound(handleNotFound);
+  server.begin();
 
-	Serial.println(String("Open http://") + WiFi.softAPIP() + " in your browser to see it working.");
-	// Start Serial for diplay debug message
-	Serial.begin(115200);
-	delay(500);
+  // Start Serial for diplay debug message
+  Serial.begin(115200);
+  delay(500);
 
-	while(1)
-	{
-		server.handleClient();
-		vTaskDelay(10);
-	}
-	vTaskDelete(NULL);
+  Serial.println(String("Open http://") + WiFi.softAPIP() + " in your browser to see it working.");
+
+  while(1)
+  {
+    server.handleClient();
+    vTaskDelay(10);
+  }
+  vTaskDelete(NULL);
 }
 
