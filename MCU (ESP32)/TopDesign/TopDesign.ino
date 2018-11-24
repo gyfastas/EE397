@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <Ultrasonic.h>
 #include <WebServer.h>
 
-#define EEPROM_SIZE 13
+#define EEPROM_SIZE 11
 #define EEPROM_FLAG 0x02
 
 #define STANDBY 15

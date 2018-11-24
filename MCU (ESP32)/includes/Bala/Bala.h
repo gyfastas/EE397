@@ -39,29 +39,38 @@ private:
 	Kalman 			*roll_filter;
 	Kalman			*pitch_filter;
 
+	/*------------------------- Motion status -------------------------*/
+	double battery_voltage;
+
+	// MPU6050 data and KalmanFilter Timer
 	int16_t ax, ay, az, gx, gy, gz;
 	uint32_t kal_timer;
 
-	double tarAngle;
-
+	// Euler angles and gyros
 	double roll, pitch;
 	double gyrox, gyroy, gyroz;
 
+	// Wheels speed
 	int16_t speedL, speedR;
+	int16_t Motor1, Motor2;
 
-	double battery_voltage;
-
-	uint8_t Velocity_Period;
-
-	double Balance_Kp, Balance_Kd;
-	double Velocity_Kp, Velocity_Ki, Velocity_Kd;
-	double Turn_Kp, Turn_Ki, Turn_Kd;
-	double Speed_Diff_K;
-
-	uint8_t cardown_limen;
+	/*------------------------- Control Parameters -------------------------*/
+	double target_angle;
+	int16_t movement_step;
+	double target_turn_base;     // because our robot's weight is unbalance, the right part is heavier than the left part, we need a offset in turn loop for adjustment
+	double turn_step_base;
 	uint8_t motor_dead_zone;
 
-	int16_t Motor1, Motor2;
+	int16_t movement;
+	double turn_step;
+	
+	uint8_t Velocity_Period;
+	uint8_t cardown_limen;
+
+	// PID parameters
+	double Balance_Kp, Balance_Kd;
+	double Velocity_Kp, Velocity_Ki;
+	double Turn_Kp, Turn_Kd;
 
 	void _constrain(int16_t &val, int16_t low, int16_t high);
 
@@ -84,6 +93,7 @@ public:
 	double getPitch() { return pitch; };
 	double getGyroX() { return gyrox; };
 	double getGyroY() { return gyroy; };
+	double getGyroZ() { return gyroz; };
 	int16_t getSpeedL() { return speedL; };
 	int16_t getSpeedR() { return speedR; };
 	double getBatteryVoltage() { return battery_voltage; };
@@ -95,15 +105,13 @@ public:
 		case 1 : return Balance_Kd;
 		case 2 : return Velocity_Kp;
 		case 3 : return Velocity_Ki;
-		case 4 : return Velocity_Kd;
-		case 5 : return Turn_Kp;
-		case 6 : return Turn_Ki;
-		case 7 : return Turn_Kd;	
-		case 8 : return Speed_Diff_K;	
-		case 9 : return tarAngle;
-		case 10 : return (double)Velocity_Period;
-		case 11 : return (double)cardown_limen;
-		case 12 : return (double)motor_dead_zone;
+		case 4 : return Turn_Kp;
+		case 5 : return Turn_Kd;		
+		case 6 : return (double)motor_dead_zone;
+		case 7 : return target_angle;
+		case 8 : return (double)movement_step;
+		case 9 : return target_turn_base;
+		case 10 : return turn_step_base;
 		default: return 0; 
 		}		
 	}
@@ -116,23 +124,21 @@ public:
 		case 1 : Balance_Kd = val; break;
 		case 2 : Velocity_Kp = val; break;
 		case 3 : Velocity_Ki = val; break;
-		case 4 : Velocity_Kd = val; break;
-		case 5 : Turn_Kp = val; break;
-		case 6 : Turn_Ki = val; break;
-		case 7 : Turn_Kd = val; break;
-		case 8 : Speed_Diff_K = val; break;
-		case 9 : tarAngle = val; break;
-		case 10 : Velocity_Period = (uint8_t)val; break;
-		case 11 : cardown_limen = (uint8_t)val; break;
-		case 12 : motor_dead_zone = (uint8_t)val; break;
+		case 4 : Turn_Kp = val; break;
+		case 5 : Turn_Kd = val; break;
+		case 6 : motor_dead_zone = (uint8_t)val; break;
+		case 7 : target_angle = val; break;
+		case 8 : movement_step = (int16_t)val; break;
+		case 9 : target_turn_base = val; break;
+		case 10 : turn_step_base = val; break;
 		default: break;
 		}
 	}
 
 	// control
-	// void stop();
-	// void move(int16_t speed, uint16_t duration = 0);
-	// void turn(int16_t speed, uint16_t duration = 0);
+	void stop();
+	void move(uint8_t direction, int16_t speed = 0, uint16_t duration = 0);
+	void turn(uint8_t direction, int16_t speed = 0, uint16_t duration = 0);
 	// void rotate(int16_t speed, uint16_t duration = 0);
 };
 

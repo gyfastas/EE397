@@ -24,7 +24,7 @@ String htmlGenerateOneParameter(uint8_t id, String name, uint8_t precision)
   + String(id)
   + String("\" name=\"")
   + String(id)
-  + String("\" method =\"post\" action=\"Control\">")
+  + String("\" method =\"post\" action=\"Tuning\">")
   + name 
   + String("  <input id=\"")
   + String(id)
@@ -51,21 +51,30 @@ String htmlIndex()
   <td width = \"100\">SpeedL:<span id = 'SpeedL'></span></td> \
   <td width = \"100\">SpeedR:<span id = 'SpeedR'></span></td> \
   <td width = \"100\">Dist:<span id = 'Distance'></span></td> \
+  <td width = \"100\">GyroX:<span id = 'GyroX'></span></td> \
+  <td width = \"100\">GyroY:<span id = 'GyroY'></span></td> \
+  <td width = \"100\">GyroZ:<span id = 'GyroZ'></span></td> \
   </tr></table></div></br>";
+
+  htmlIndex += "<div style = \"margin-top:10px;margin-bottom:30px;\"><form name=\"input\" action=\"Motion\" method=\"post\"> \
+  <input name=\"F\" type=\"submit\" value=\"Forward\"> \
+  <input name=\"B\" type=\"submit\" value=\"Backward\"> \
+  <input name=\"L\" type=\"submit\" value=\"Left\"> \
+  <input name=\"R\" type=\"submit\" value=\"Right\"> \
+  <input name=\"S\" type=\"submit\" value=\"Stop\"> \
+  </form></div>";
 
   htmlIndex += htmlGenerateOneParameter(1, String("BKP"), 4);
   htmlIndex += htmlGenerateOneParameter(2, String("BKD"), 4);
   htmlIndex += htmlGenerateOneParameter(3, String("VKP"), 4);
   htmlIndex += htmlGenerateOneParameter(4, String("VKI"), 4);
-  htmlIndex += htmlGenerateOneParameter(5, String("VKD"), 4);
-  htmlIndex += htmlGenerateOneParameter(6, String("TKP"), 4);
-  htmlIndex += htmlGenerateOneParameter(7, String("TKI"), 4);
-  htmlIndex += htmlGenerateOneParameter(8, String("TKD"), 4);
-  htmlIndex += htmlGenerateOneParameter(9, String("SDK"), 4);
-  htmlIndex += htmlGenerateOneParameter(10, String("TarAngle"), 2);
-  htmlIndex += htmlGenerateOneParameter(11, String("VecPeriod"), 0);
-  htmlIndex += htmlGenerateOneParameter(12, String("Cardown"), 0);
-  htmlIndex += htmlGenerateOneParameter(13, String("MDZ"), 2);
+  htmlIndex += htmlGenerateOneParameter(5, String("TKP"), 4);
+  htmlIndex += htmlGenerateOneParameter(6, String("TKD"), 4);
+  htmlIndex += htmlGenerateOneParameter(7, String("MDZ"), 2);
+  htmlIndex += htmlGenerateOneParameter(8, String("Target_Angle"), 2);
+  htmlIndex += htmlGenerateOneParameter(9, String("Movement_Step"), 2);
+  htmlIndex += htmlGenerateOneParameter(10, String("Turn_Base"), 2);
+  htmlIndex += htmlGenerateOneParameter(11, String("Turn_Step"), 2);  
 
   htmlIndex += "</div>";
 
@@ -84,12 +93,18 @@ String htmlIndex()
            document.getElementById(\"SpeedL\").innerText = data.SpeedL;\
            document.getElementById(\"SpeedR\").innerText = data.SpeedR;\
            document.getElementById(\"Distance\").innerText = data.Distance;\
+           document.getElementById(\"GyroX\").innerText = data.GyroX;\
+           document.getElementById(\"GyroY\").innerText = data.GyroY;\
+           document.getElementById(\"GyroZ\").innerText = data.GyroZ;\
          } else {\
            document.getElementById(\"Battery\").innerText = \"0.0000\";\
            document.getElementById(\"Angle\").innerText = \"0.0000\";\
            document.getElementById(\"SpeedL\").innerText = \"0.0000\";\
            document.getElementById(\"SpeedR\").innerText = \"0.0000\";\
            document.getElementById(\"Distance\").innerText = \"0.0000\";\
+           document.getElementById(\"GyroX\").innerText = \"0.0000\";\
+           document.getElementById(\"GyroY\").innerText = \"0.0000\";\
+           document.getElementById(\"GyroZ\").innerText = \"0.0000\";\
          }\
        } else {\
            document.getElementById(\"Battery\").innerText = \"0.0000\";\
@@ -97,6 +112,9 @@ String htmlIndex()
            document.getElementById(\"SpeedL\").innerText = \"0.0000\";\
            document.getElementById(\"SpeedR\").innerText = \"0.0000\";\
            document.getElementById(\"Distance\").innerText = \"0.0000\";\
+           document.getElementById(\"GyroX\").innerText = \"0.0000\";\
+           document.getElementById(\"GyroY\").innerText = \"0.0000\";\
+           document.getElementById(\"GyroZ\").innerText = \"0.0000\";\
        }\
      };\
      xhr.send();\
@@ -126,10 +144,13 @@ void handleUpdate()
     + "\"Angle\": " + String(myBala.getRoll(),2) + "," 
     + "\"SpeedL\": " + String(myBala.getSpeedL()) + "," 
     + "\"SpeedR\": " + String(myBala.getSpeedR()) + ","
-    + "\"Distance\": " + String(dist_cm) + "}");
+    + "\"Distance\": " + String(dist_cm) + ","
+    + "\"GyroX\": " + String(myBala.getGyroX(),2) + ","
+    + "\"GyroY\": " + String(myBala.getGyroY(),2) + ","
+    + "\"GyroZ\": " + String(myBala.getGyroZ(),2) + "}");
 }
 
-void handleControl()
+void handleTuning()
 {
   if (!server.authenticate(www_username, www_password))
     return server.requestAuthentication(DIGEST_AUTH, www_realm, authFailResponse);
@@ -137,6 +158,25 @@ void handleControl()
   myBala.setParaK((uint8_t)(server.argName(0)).toInt()-1,server.arg(0).toFloat());
   myFlash.updateEEPROM(myBala);
   server.send(200, "text/html", htmlIndex());
+}
+
+void handleMotion()
+{
+  if (!server.authenticate(www_username, www_password))
+    return server.requestAuthentication(DIGEST_AUTH, www_realm, authFailResponse);
+
+  if (server.argName(0) == "F")
+    myBala.move(1);
+  else if (server.argName(0) == "B")
+    myBala.move(2);
+  else if (server.argName(0) == "L")
+    myBala.turn(1);
+  else if (server.argName(0) == "R")
+    myBala.turn(2);
+  else if (server.argName(0) == "S") 
+    myBala.stop();
+
+  server.send(200, "text/html", htmlIndex());    
 }
 
 void handleNotFound() 
@@ -160,8 +200,10 @@ void WiFiControl(void *parameter)
 
   server.on("/", handleRoot);
   server.on("/Update", handleUpdate);
-  server.on("/Control",HTTP_GET,handleRoot);
-  server.on("/Control",HTTP_POST,handleControl);
+  server.on("/Tuning", HTTP_GET, handleRoot);
+  server.on("/Tuning", HTTP_POST, handleTuning);
+  server.on("/Motion", HTTP_GET, handleRoot);
+  server.on("/Motion", HTTP_POST, handleMotion);
   server.onNotFound(handleNotFound);
   server.begin();
 

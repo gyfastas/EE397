@@ -62,22 +62,25 @@ Bala::Bala(MPU6050 &m, Kalman &kfr, Kalman &kfp, Tb6612fng &tb, TwoWire &w)
 
 	this->kal_timer = micros();
 
-	this->tarAngle = 0;
+	this->target_angle = 0;
+	this->movement_step = 100;
+	this->target_turn_base = 3;
+	this->turn_step_base = 1.0;
 
 	this->Velocity_Period = 5;
-
-	this->Balance_Kp = 10.0;
-	this->Balance_Kd = 0.8;
-	this->Velocity_Kp = 1;
-	this->Velocity_Ki = 0.001;
-	this->Velocity_Kd = 0;
-	this->Turn_Kp = 0;
-	this->Turn_Ki = 0;
-	this->Turn_Kd = 0;
-	this->Speed_Diff_K = 0;
-	
 	this->cardown_limen = 35;
 	this->motor_dead_zone = 20;
+
+	this->Balance_Kp = 11.0;
+	this->Balance_Kd = 0.9;
+	this->Velocity_Kp = 1.2;
+	this->Velocity_Ki = 0.005;
+	this->Turn_Kp = 2.0;
+	this->Turn_Kd = 0.7;
+	this->Speed_Diff_K = 0;
+
+	this->movement = 0;
+	this->turn_step = 0;
 }
 
 void Bala::_constrain(int16_t &val, int16_t low, int16_t high)
@@ -100,7 +103,7 @@ void Bala::getAttitude()
 #endif
 	this->gyrox = gx / 131.0 + 3.74;
 	this->gyroy = gy / 131.0 - 1.90;
-	this->gyroz = gz / 131.0;
+	this->gyroz = gz / 131.0 + 0.40;
 
 	// Cal delta time
 	double dt = (double)(micros() - this->kal_timer) / 1000000; 
@@ -128,59 +131,54 @@ void Bala::setMotor(int16_t M1, int16_t M2)
 
 int16_t Bala::balance()
 {
-	int16_t balance = this->Balance_Kp * (this->roll - this->tarAngle) + this->Balance_Kd * this->gyrox;
+	int16_t balance = this->Balance_Kp * (this->roll - this->target_angle) + this->Balance_Kd * this->gyrox;
 	return balance;
 }
 
 int16_t Bala::velocity(int16_t target)
 {
-	static double Encoder, Encoder_last;
-	static int16_t Encoder_Int, Encoder_Diff;
+	static double Encoder;
+	static int16_t Encoder_Int;
 	int16_t Velocity;
 	Encoder = 0.8 * Encoder + 0.2 * ((this->speedL + this->speedR) - target);	 // apply first-order low pass filter 
 	Encoder_Int += Encoder;													     // integrate
-	this->_constrain(Encoder_Int, -3000, +3000);
-	Encoder_Diff = Encoder - Encoder_last;                                       // differential
-	Encoder_last = Encoder;
-	Velocity = this->Velocity_Kp * Encoder + this->Velocity_Ki * Encoder_Int + this->Velocity_Kd * Encoder_Diff;
+	Encoder_Int -= this->movement;                                               // motion cotrol : move forword and backward
+	this->_constrain(Encoder_Int, -10000, +10000);
+	Velocity = this->Velocity_Kp * Encoder + this->Velocity_Ki * Encoder_Int;
 	return Velocity;
 }
 
 int16_t Bala::turn()
 {
-	// static int16_t Turn_Target, Turn_Convert = 3, Turn_Int;
-	// int16_t Turn;
-	// if (1 == Flag_Left)             Turn_Target += Turn_Convert;
-	// else if (1 == Flag_Right)       Turn_Target -= Turn_Convert;
-	// else Turn_Target = 0;
-	// this->_constrain(Turn_Target, -80, 80);
-	// Turn_Int += Turn_Target;													// integrate
-	// this->_constrain(Turn_Int, -3000, +3000);
-	// Turn = this->Turn_Kp * -Turn_Target + this->Turn_Ki * Turn_Int + this->Turn_Kd * this->gyroz;
-	// return Turn;
-	return 0;
+	static double Turn_Target;
+	int16_t Turn;
+	if (abs(this->turn_step - 0) < 0.000001)			// if not in turn
+	{
+		if (this->movement == 0) Turn_Target = 0;									// if stay, do not adjust
+		Turn_Target = ((this->movement > 0) ? -1 : +1) * this->target_turn_base;    // if go straight, adjust
+	}
+	else
+		Turn_Target += this->turn_step;
+	this->_constrain(Turn_Target, -80, 80);
+	Turn = -this->Turn_Kp * Turn_Target - this->Turn_Kd * this->gyroz;
+	return Turn;
 }
 
 void Bala::PIDController()
 {
 	static int16_t Balance_Pwm, Velocity_Pwm, Turn_Pwm;
-	static int16_t speed_diff, speed_diff_adjust;
 
 	// balance loop
 	Balance_Pwm = this->balance();
 
 	// velocity loop
 	Velocity_Pwm = this->velocity();
-	
-	// speed diff
-	speed_diff = (this->speedL - this->speedR);
-	speed_diff_adjust = (this->Speed_Diff_K * speed_diff);
 
 	// turn loop
 	Turn_Pwm = this->turn();
 
 	// blend loops
-	this->Motor1 = Balance_Pwm - Velocity_Pwm + Turn_Pwm - speed_diff_adjust;
+	this->Motor1 = Balance_Pwm - Velocity_Pwm + Turn_Pwm;
 	this->Motor2 = Balance_Pwm - Velocity_Pwm - Turn_Pwm;
 }
 
@@ -251,4 +249,24 @@ void Bala::run()
 
 	// Motor out
 	this->setMotor(+this->Motor1, -this->Motor2);
+}
+
+void Bala::stop()
+{
+	this->movement = 0;
+	this->turn_step = 0;
+}
+ 
+void Bala::move(uint8_t direction, int16_t speed, uint16_t duration)
+{
+	if (direction == 1) this->movement = +this->movement_step;          // forward
+	else if (direction == 2) this->movement = -this->movement_step;     // backward
+	else this->movement = 0;
+}
+
+void Bala::turn(uint8_t direction, int16_t speed, uint16_t duration)
+{
+	if (direction == 1) this->turn_step = -this->turn_step_base;          // left
+	else if (direction == 2) this->turn_step = +this->turn_step_base;     // right
+	else this->turn_step = 0;	
 }
