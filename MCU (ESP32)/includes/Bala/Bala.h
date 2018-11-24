@@ -73,6 +73,7 @@ private:
 	double Turn_Kp, Turn_Kd;
 
 	void _constrain(int16_t &val, int16_t low, int16_t high);
+	void _constrain(double &val, double low, double high);
 
 	void getAttitude();
 	void setMotor(int16_t M1, int16_t M2);

@@ -77,7 +77,6 @@ Bala::Bala(MPU6050 &m, Kalman &kfr, Kalman &kfp, Tb6612fng &tb, TwoWire &w)
 	this->Velocity_Ki = 0.005;
 	this->Turn_Kp = 2.0;
 	this->Turn_Kd = 0.7;
-	this->Speed_Diff_K = 0;
 
 	this->movement = 0;
 	this->turn_step = 0;
@@ -87,6 +86,12 @@ void Bala::_constrain(int16_t &val, int16_t low, int16_t high)
 {
 	if (val < low) val = low;
 	else if (val > high) val = high;
+}
+
+void Bala::_constrain(double &val, double low, double high)
+{
+	if (val < low) val = low;
+	else if (val > high) val = high;	
 }
 
 void Bala::getAttitude()
