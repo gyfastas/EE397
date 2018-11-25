@@ -79,8 +79,11 @@ __第三次汇报__
 
 ### Issues
 - `Issue5` : 两轮速度不一致，小车易打转（疑因电机接线接触不良导致该问题变严重）
-- `Issue6` : Web服务器端易超时
+- Issue6 : Web服务器端易超时
 - `Issue7` : VNC与树莓派通信效果不佳
+
+### Solutions
+- Issue6 : 使用[ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer)
 
 ## 11.24
 

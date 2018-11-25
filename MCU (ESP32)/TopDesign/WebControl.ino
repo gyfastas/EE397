@@ -15,9 +15,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include <WiFi.h>
-#include <WebServer.h>
-
 String htmlGenerateOneParameter(uint8_t id, String name, uint8_t precision)
 {
   String div = String("<div style = \"margin-bottom:30px;\"><div style = \"float:left;margin-right:10px;\"><form id=\"")
@@ -62,7 +59,7 @@ String htmlIndex()
   <input name=\"L\" type=\"submit\" value=\"Left\"> \
   <input name=\"R\" type=\"submit\" value=\"Right\"> \
   <input name=\"S\" type=\"submit\" value=\"Stop\"> \
-  </form></div>";
+  </form></div></br>";
 
   htmlIndex += htmlGenerateOneParameter(1, String("BKP"), 4);
   htmlIndex += htmlGenerateOneParameter(2, String("BKD"), 4);
@@ -80,7 +77,7 @@ String htmlIndex()
 
   htmlIndex += " <script>\
    requestData(); \
-   setInterval(requestData, 500);\
+   setInterval(requestData, 100);\
    function requestData() {\
      var xhr = new XMLHttpRequest();\
      xhr.open('GET', '/Update');\
@@ -126,20 +123,20 @@ String htmlIndex()
   return htmlIndex;
 }
 
-void handleRoot()
+void handleRoot(AsyncWebServerRequest *request)
 {
-  if (!server.authenticate(www_username, www_password))
-    return server.requestAuthentication(DIGEST_AUTH, www_realm, authFailResponse);
+  if (!request->authenticate(www_username, www_password))
+    return request->requestAuthentication();
 
-  server.send(200, "text/html", htmlIndex());
+  request->send(200, "text/html", htmlIndex());
 }
 
-void handleUpdate()
+void handleUpdate(AsyncWebServerRequest *request)
 {
-  if (!server.authenticate(www_username, www_password))
-    return server.requestAuthentication(DIGEST_AUTH, www_realm, authFailResponse);
+  if (!request->authenticate(www_username, www_password))
+    return request->requestAuthentication();
 
-  server.send(200, "application/json",
+  request->send(200, "application/json",
      "{\"Battery\": " + String(myBala.getBatteryVoltage(),2) + ","
     + "\"Angle\": " + String(myBala.getRoll(),2) + "," 
     + "\"SpeedL\": " + String(myBala.getSpeedL()) + "," 
@@ -150,48 +147,49 @@ void handleUpdate()
     + "\"GyroZ\": " + String(myBala.getGyroZ(),2) + "}");
 }
 
-void handleTuning()
+void handleTuning(AsyncWebServerRequest *request)
 {
-  if (!server.authenticate(www_username, www_password))
-    return server.requestAuthentication(DIGEST_AUTH, www_realm, authFailResponse);
+  if (!request->authenticate(www_username, www_password))
+    return request->requestAuthentication();
 
-  myBala.setParaK((uint8_t)(server.argName(0)).toInt()-1,server.arg(0).toFloat());
+  myBala.setParaK((uint8_t)(request->argName((size_t)0)).toInt()-1, request->arg((size_t)0).toFloat());
   myFlash.updateEEPROM(myBala);
-  server.send(200, "text/html", htmlIndex());
+  
+  request->redirect("/");
 }
 
-void handleMotion()
+void handleMotion(AsyncWebServerRequest *request)
 {
-  if (!server.authenticate(www_username, www_password))
-    return server.requestAuthentication(DIGEST_AUTH, www_realm, authFailResponse);
+  if (!request->authenticate(www_username, www_password))
+    return request->requestAuthentication();
 
-  if (server.argName(0) == "F")
+  if (request->argName((size_t)0) == "F")
     myBala.move(1);
-  else if (server.argName(0) == "B")
+  else if (request->argName((size_t)0) == "B")
     myBala.move(2);
-  else if (server.argName(0) == "L")
+  else if (request->argName((size_t)0) == "L")
     myBala.turn(1);
-  else if (server.argName(0) == "R")
+  else if (request->argName((size_t)0) == "R")
     myBala.turn(2);
-  else if (server.argName(0) == "S") 
+  else if (request->argName((size_t)0) == "S") 
     myBala.stop();
 
-  server.send(200, "text/html", htmlIndex());    
+  request->redirect("/");    
 }
 
-void handleNotFound() 
+void handleNotFound(AsyncWebServerRequest *request) 
 {
   String message = "File Not Found\n\n";
   message += "URI: ";
-  message += server.uri();
+  message += request->url();
   message += "\nMethod: ";
-  message += (server.method() == HTTP_GET) ? "GET" : "POST";
+  message += (request->method() == HTTP_GET) ? "GET" : "POST";
   message += "\nArguments: ";
-  message += server.args();
+  message += request->args();
   message += "\n";
-  for (uint8_t i = 0; i < server.args(); i++)
-    message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
-  server.send(404, "text/plain", message);
+  for (uint8_t i = 0; i < request->args(); i++)
+    message += " " + request->argName(i) + ": " + request->arg(i) + "\n";
+  request->send(404, "text/plain", message);
 }
 
 void WiFiControl(void *parameter)
@@ -213,11 +211,6 @@ void WiFiControl(void *parameter)
 
   Serial.println(String("Open http://") + WiFi.softAPIP() + " in your browser to see it working.");
 
-  while(1)
-  {
-    server.handleClient();
-    vTaskDelay(10);
-  }
   vTaskDelete(NULL);
 }
 

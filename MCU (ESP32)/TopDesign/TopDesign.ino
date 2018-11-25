@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <Bala.h>
 #include <Flash.h>
 #include <Ultrasonic.h>
-#include <WebServer.h>
+#include <ESPAsyncWebServer.h>
 
 #define EEPROM_SIZE 11
 #define EEPROM_FLAG 0x01
@@ -45,14 +45,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 const char* ssid     = "ESP32-Access-Point";
 const char* password = "123456789";
 
-WebServer server(80);
+AsyncWebServer server(80);
 
 const char* www_username = "admin";
 const char* www_password = "LWYGN";
-// allows you to set the realm of authentication Default:"Login Required"
-const char* www_realm = "Custom Auth Realm";
-// the Content of the HTML response in case of Unautherized Access Default:empty
-String authFailResponse = "Authentication Failed";
 
 MPU6050 mpu;
 Kalman kfr, kfp;
@@ -93,7 +89,7 @@ void setup()
     1,                    /* Priority of the task. */
     NULL,                 /* Task handle. */
     0);                   /* Run on core 0. */ 
-	
+  
   // Create a task on RTOS for WiFi event
   xTaskCreatePinnedToCore(
     WiFiControl,          /* Task function. */
@@ -108,5 +104,6 @@ void setup()
 
 void loop()
 {
-	
+  
 }
+
