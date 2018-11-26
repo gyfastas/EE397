@@ -15,6 +15,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+uint8_t avoid_en = 0;
+
 String htmlGenerateOneParameter(uint8_t id, String name, uint8_t precision)
 {
   String div = String("<div style = \"margin-bottom:30px;\"><div style = \"float:left;margin-right:10px;\"><form id=\"")
@@ -36,18 +38,15 @@ String htmlGenerateOneParameter(uint8_t id, String name, uint8_t precision)
   return div;  
 }
 
-String htmlGenerateSwitch()
+String htmlGenerateSwitch(uint8_t checked)
 {
 	 String SW = String("<div style = \"margin-top:10px;margin-left:300px;\">")
-	+String("<form name=\"switch\" action = \"Avoid\" method = \"post\">")
-	+String("<input name = \"checkbox\" type = \"checkbox\" onclick = \"checkboxOnclick(this)\">")
+	+String("<form id = \"sw\" name=\"switch\" action = \"SW\" method = \"post\">")
+	+String("<input name = \"checkbox\" type = \"checkbox\"") 
+  +((checked) ? String("checked") : String(" "))
+	+String("id = \"swtich\" onClick = \"checkboxOnclick()\">")
 	+String("</form>")
-	+String("<span id = 'Mode'>开启避障</span>")
-	+String("<script> function checkboxOnclick()")
-	+String("{if (checkbox.checked == true)")
-	+String("{document.getElementById(\"Mode\").innerText = \"关闭避障\";} ")
-	+String("else {document.getElementById(\"Mode\").innerText = \"开启避障\";}")
-	+String("switch.submit();} </script>")
+	+String("<span id = 'Mode'>Open</span>")
 	+String("</div></br>");
 	
 	return SW;
@@ -63,12 +62,12 @@ String rootIndex()
 	  
   return rootIndex;
 } 
-String htmlIndex()
+String htmlIndex(uint8_t checked)
 {
   String htmlIndex = "<!DOCTYPE html><html><head><h5>Bala Remote Control</h5></head><body>";
 
   htmlIndex += "<div>";
-
+  htmlIndex += htmlGenerateSwitch(checked);
   htmlIndex += "<div style = \"margin-top:10px;margin-bottom:10px;\"><table border =\"2\"><tr> \
   <td width = \"100\">Battery:<span id = 'Battery'></span></td> \
   <td width = \"100\">Angle:<span id = 'Angle'></span></td> \
@@ -103,6 +102,11 @@ String htmlIndex()
   htmlIndex += "</div>";
 
   htmlIndex += " <script>\
+   function checkboxOnclick(){ \
+   if (document.getElementById(\"switch\")==true){ \
+   document.getElementById(\"Mode\").innerHTML = \"Open\";}\
+   else {document.getElementById(\"Mode\").innerHTML = \"Close\";}   \
+   document.getElementById(\"sw\").submit();}                       \
    requestData(); \
    setInterval(requestData, 100);\
    function requestData() {\
@@ -155,7 +159,7 @@ void handleRoot(AsyncWebServerRequest *request)
   if (!request->authenticate(www_username, www_password))
     return request->requestAuthentication();
 
-  request->send(200, "text/html", htmlIndex());
+  request->send(200, "text/html", htmlIndex(avoid_en));
 }
 
 void handleUpdate(AsyncWebServerRequest *request)
@@ -204,6 +208,17 @@ void handleMotion(AsyncWebServerRequest *request)
   request->redirect("/");    
 }
 
+void handleSwitch(AsyncWebServerRequest *request) 
+{
+  if (!request->authenticate(www_username, www_password))
+    return request->requestAuthentication();
+   
+    Serial.print("ok");
+    Serial.print(request->arg((size_t)0));
+    avoid_en = (String(request->arg((size_t)0)) == String("on"));
+    request->redirect("/"); 
+}
+
 void handleNotFound(AsyncWebServerRequest *request) 
 {
   String message = "File Not Found\n\n";
@@ -224,6 +239,7 @@ void WiFiControl(void *parameter)
   WiFi.softAP(ssid, password);
 
   server.on("/", handleRoot);
+  server.on("/SW",handleSwitch);
   server.on("/Update", handleUpdate);
   server.on("/Tuning", HTTP_GET, handleRoot);
   server.on("/Tuning", HTTP_POST, handleTuning);
