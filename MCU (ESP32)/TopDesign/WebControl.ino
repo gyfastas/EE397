@@ -51,7 +51,15 @@ String htmlGenerateSwitch()
 	
 	return SW;
 }
-
+String rootIndex()
+{
+  String rootIndex = "<!DOCTYPE html><html>";
+  rootIndex += "<frameset cols = \"120,*\"> \ 
+      <frame src = \"/text1/html.html\">  \
+      <frame src = \"/text2/html.html\"> \
+      </ frameset>  \
+      </ html>"; 
+} 
 String htmlIndex()
 {
   String htmlIndex = "<!DOCTYPE html><html><head><h5>Bala Remote Control</h5></head><body>";
@@ -145,6 +153,7 @@ void handleRoot(AsyncWebServerRequest *request)
     return request->requestAuthentication();
 
   request->send(200, "text/html", htmlIndex());
+  request->send(200, "root/html", rootIndex());
 }
 
 void handleUpdate(AsyncWebServerRequest *request)
