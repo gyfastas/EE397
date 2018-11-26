@@ -35,18 +35,19 @@ String htmlGenerateOneParameter(uint8_t id, String name, uint8_t precision)
   + String("</div></div></br>");
   return div;  
 }
+
 String htmlGenerateSwitch()
 {
 	 String SW = String("<div style = \"margin-top:10px;margin-left:300px;\">")
-	+String("<form name=\"switch\" action = \"Avoid\" method = \"post\">");
+	+String("<form name=\"switch\" action = \"Avoid\" method = \"post\">")
 	+String("<input name = \"checkbox\" type = \"checkbox\" onclick = \"checkboxOnclick(this)\">")
 	+String("</form>")
-	+String("<span id = 'Mode'>开启避障</span>");
+	+String("<span id = 'Mode'>开启避障</span>")
 	+String("<script> function checkboxOnclick()")
 	+String("{if (checkbox.checked == true)")
 	+String("{document.getElementById(\"Mode\").innerText = \"关闭避障\";} ")
 	+String("else {document.getElementById(\"Mode\").innerText = \"开启避障\";}")
-	+String("switch.submit();} </script>");
+	+String("switch.submit();} </script>")
 	+String("</div></br>");
 	
 	return SW;
@@ -59,6 +60,8 @@ String rootIndex()
       <frame src = \"/text2/html.html\"> \
       </ frameset>  \
       </ html>"; 
+	  
+  return rootIndex;
 } 
 String htmlIndex()
 {
@@ -84,7 +87,7 @@ String htmlIndex()
   <input name=\"R\" type=\"submit\" value=\"Right\"> \
   <input name=\"S\" type=\"submit\" value=\"Stop\"> \
   </form></div></br>";
-  htmlIndex += htmlGenerateSwitch();
+
   htmlIndex += htmlGenerateOneParameter(1, String("BKP"), 4);
   htmlIndex += htmlGenerateOneParameter(2, String("BKD"), 4);
   htmlIndex += htmlGenerateOneParameter(3, String("VKP"), 4);
@@ -153,7 +156,6 @@ void handleRoot(AsyncWebServerRequest *request)
     return request->requestAuthentication();
 
   request->send(200, "text/html", htmlIndex());
-  request->send(200, "root/html", rootIndex());
 }
 
 void handleUpdate(AsyncWebServerRequest *request)
@@ -201,15 +203,7 @@ void handleMotion(AsyncWebServerRequest *request)
 
   request->redirect("/");    
 }
-void handleAvoidMode(AsyncWebServerRequest *request)
-{
-	if (!request->authenticate(www_username, www_password))
-    return request->requestAuthentication();
 
-	if (request->argName((size_t)0) =="switch")
-		
-
-}
 void handleNotFound(AsyncWebServerRequest *request) 
 {
   String message = "File Not Found\n\n";
@@ -235,7 +229,6 @@ void WiFiControl(void *parameter)
   server.on("/Tuning", HTTP_POST, handleTuning);
   server.on("/Motion", HTTP_GET, handleRoot);
   server.on("/Motion", HTTP_POST, handleMotion);
-  server.on("/Avoid" , HTTP_POST, handleAvoidMode);
   server.onNotFound(handleNotFound);
   server.begin();
 
