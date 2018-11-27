@@ -41,7 +41,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define ECHO 39
 #define SONIC_DIST_CM 500
 
-#define NUMSSID 2
 const char* ssid     = "ESP32-Access-Point";
 const char* password = "123456789";
 
@@ -59,6 +58,7 @@ Ultrasonic mySonic(TRIG, ECHO, SONIC_DIST_CM);
 
 // Global variables
 uint16_t dist_cm = 0;
+uint8_t avoidance_en = 0;
 
 void setup() 
 {

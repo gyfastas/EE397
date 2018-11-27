@@ -32,6 +32,44 @@ void distDetection(void *parameter)
     {
       detect_interval = millis() + 100;
       dist_cm = mySonic.ping_cm();
+    }
+    
+    // finite state machine
+    static uint32_t state_timer = millis();
+    static uint8_t state = 0;
+    // Avoidance Mode
+    if (avoidance_en)
+    {
+      myBala.setParaK(8, 50); // in avoidance mode, run at a slow speed
+      switch (state)
+      {
+      case 0:  // state 0 : move forward (if no obstacle)
+        myBala.move(1);      // move forward
+        if (dist_cm < 40)    // safe distance : 40 cm
+        {
+          myBala.move(2);    // move backward to avoid hitting the obstacle
+          state_timer = millis();
+          state = 1;
+        }
+        break;
+      case 1:  // state 1 : move backward (to avoid hitting the obstacle)
+        if (millis() - state_timer > 200) // move backward for 200 ms
+        {
+          myBala.move(0);
+          myBala.turn(1);    // turn left to bypass the obstacle
+          state_timer = millis();
+          state = 2;
+        }
+        break;
+      case 2:  // state 2 : turn left (to bypass the obstacle)
+        if (dist_cm > 40)    // if no obstacle, return to state 0
+        {
+          myBala.turn(0);
+          state = 0;
+        }
+        break;
+      default: break;
+      }
     }  
     vTaskDelay(10); 
   }

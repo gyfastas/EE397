@@ -15,8 +15,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-uint8_t avoid_en = 0;
-
 String htmlGenerateOneParameter(uint8_t id, String name, uint8_t precision)
 {
   String div = String("<div style = \"margin-bottom:30px;\"><div style = \"float:left;margin-right:10px;\"><form id=\"")
@@ -38,45 +36,33 @@ String htmlGenerateOneParameter(uint8_t id, String name, uint8_t precision)
   return div;  
 }
 
-String htmlGenerateSwitch(uint8_t checked)
+String htmlGenerateSwitch(uint8_t checked, String id, String label)
 {
-	 String SW = String("<div style = \"margin-top:10px;margin-left:300px;\">")
-	+String("<form id = \"sw\" name=\"switch\" action = \"SW\" method = \"post\">")
-	+String("<input name = \"checkbox\" type = \"checkbox\"") 
-  +((checked) ? String("checked") : String(" "))
-	+String("id = \"swtich\" onClick = \"checkboxOnclick()\">")
-	+String("</form>")
-	+String("<span id = 'Mode'>Open</span>")
-	+String("</div></br>");
-	
-	return SW;
+  String sw = String("<div style = \"margin-top:10px;margin-left:300px;\">")
+  + String("<input type = \"checkbox\"") 
+  + ((checked) ? String(" checked ") : String(" "))
+  + String("id = \"")
+  + id
+  + String("\" onClick = \"checkboxOnclick()\">")
+  + label
+  + String("</div></br>");
+  return sw;
 }
-String rootIndex()
-{
-  String rootIndex = "<!DOCTYPE html><html>";
-  rootIndex += "<frameset cols = \"120,*\"> \ 
-      <frame src = \"/text1/html.html\">  \
-      <frame src = \"/text2/html.html\"> \
-      </ frameset>  \
-      </ html>"; 
-	  
-  return rootIndex;
-} 
-String htmlIndex(uint8_t checked)
+
+String htmlIndex(uint8_t avoidance, uint8_t track)
 {
   String htmlIndex = "<!DOCTYPE html><html><head><h5>Bala Remote Control</h5></head><body>";
 
   htmlIndex += "<div>";
-  htmlIndex += htmlGenerateSwitch(checked);
+
+  htmlIndex += htmlGenerateSwitch(avoidance, String("Avoidance"), String("Avoidance Mode"));
+
   htmlIndex += "<div style = \"margin-top:10px;margin-bottom:10px;\"><table border =\"2\"><tr> \
   <td width = \"100\">Battery:<span id = 'Battery'></span></td> \
   <td width = \"100\">Angle:<span id = 'Angle'></span></td> \
   <td width = \"100\">SpeedL:<span id = 'SpeedL'></span></td> \
   <td width = \"100\">SpeedR:<span id = 'SpeedR'></span></td> \
   <td width = \"100\">Dist:<span id = 'Distance'></span></td> \
-  <td width = \"100\">GyroX:<span id = 'GyroX'></span></td> \
-  <td width = \"100\">GyroY:<span id = 'GyroY'></span></td> \
-  <td width = \"100\">GyroZ:<span id = 'GyroZ'></span></td> \
   </tr></table></div></br>";
 
   htmlIndex += "<div style = \"margin-top:10px;margin-bottom:30px;\"><form name=\"input\" action=\"Motion\" method=\"post\"> \
@@ -102,51 +88,47 @@ String htmlIndex(uint8_t checked)
   htmlIndex += "</div>";
 
   htmlIndex += " <script>\
-   function checkboxOnclick(){ \
-   if (document.getElementById(\"switch\")==true){ \
-   document.getElementById(\"Mode\").innerHTML = \"Open\";}\
-   else {document.getElementById(\"Mode\").innerHTML = \"Close\";}   \
-   document.getElementById(\"sw\").submit();}                       \
-   requestData(); \
-   setInterval(requestData, 100);\
-   function requestData() {\
-     var xhr = new XMLHttpRequest();\
-     xhr.open('GET', '/Update');\
-     xhr.onload = function() {\
-       if (xhr.status === 200) {\
-         if (xhr.responseText) {\
-           var data = JSON.parse(xhr.responseText);\
-           document.getElementById(\"Battery\").innerText = data.Battery;\
-           document.getElementById(\"Angle\").innerText = data.Angle;\
-           document.getElementById(\"SpeedL\").innerText = data.SpeedL;\
-           document.getElementById(\"SpeedR\").innerText = data.SpeedR;\
-           document.getElementById(\"Distance\").innerText = data.Distance;\
-           document.getElementById(\"GyroX\").innerText = data.GyroX;\
-           document.getElementById(\"GyroY\").innerText = data.GyroY;\
-           document.getElementById(\"GyroZ\").innerText = data.GyroZ;\
-         } else {\
-           document.getElementById(\"Battery\").innerText = \"0.0000\";\
-           document.getElementById(\"Angle\").innerText = \"0.0000\";\
-           document.getElementById(\"SpeedL\").innerText = \"0.0000\";\
-           document.getElementById(\"SpeedR\").innerText = \"0.0000\";\
-           document.getElementById(\"Distance\").innerText = \"0.0000\";\
-           document.getElementById(\"GyroX\").innerText = \"0.0000\";\
-           document.getElementById(\"GyroY\").innerText = \"0.0000\";\
-           document.getElementById(\"GyroZ\").innerText = \"0.0000\";\
-         }\
-       } else {\
-           document.getElementById(\"Battery\").innerText = \"0.0000\";\
-           document.getElementById(\"Angle\").innerText = \"0.0000\";\
-           document.getElementById(\"SpeedL\").innerText = \"0.0000\";\
-           document.getElementById(\"SpeedR\").innerText = \"0.0000\";\
-           document.getElementById(\"Distance\").innerText = \"0.0000\";\
-           document.getElementById(\"GyroX\").innerText = \"0.0000\";\
-           document.getElementById(\"GyroY\").innerText = \"0.0000\";\
-           document.getElementById(\"GyroZ\").innerText = \"0.0000\";\
-       }\
-     };\
-     xhr.send();\
-   }\
+  function checkboxOnclick(){ \
+    var xhr = new XMLHttpRequest();\
+    xhr.open('POST', '/Mode');\
+    xhr.setRequestHeader(\"Content-type\", \"application/x-www-form-urlencoded\");\
+    if (document.getElementById(\"Avoidance\").checked==true){ \
+      xhr.send(\"Avoidance=on\");\
+    } else {\
+      xhr.send(\"Avoidance=off\");\
+    }\
+  }\
+  requestData(); \
+  setInterval(requestData, 100);\
+  function requestData() {\
+    var xhr = new XMLHttpRequest();\
+    xhr.open('GET', '/Update');\
+    xhr.onload = function() {\
+      if (xhr.status === 200) {\
+        if (xhr.responseText) {\
+          var data = JSON.parse(xhr.responseText);\
+          document.getElementById(\"Battery\").innerText = data.Battery;\
+          document.getElementById(\"Angle\").innerText = data.Angle;\
+          document.getElementById(\"SpeedL\").innerText = data.SpeedL;\
+          document.getElementById(\"SpeedR\").innerText = data.SpeedR;\
+          document.getElementById(\"Distance\").innerText = data.Distance;\
+        } else {\
+          document.getElementById(\"Battery\").innerText = \"0.0000\";\
+          document.getElementById(\"Angle\").innerText = \"0.0000\";\
+          document.getElementById(\"SpeedL\").innerText = \"0.0000\";\
+          document.getElementById(\"SpeedR\").innerText = \"0.0000\";\
+          document.getElementById(\"Distance\").innerText = \"0.0000\";\
+        }\
+      } else {\
+          document.getElementById(\"Battery\").innerText = \"0.0000\";\
+          document.getElementById(\"Angle\").innerText = \"0.0000\";\
+          document.getElementById(\"SpeedL\").innerText = \"0.0000\";\
+          document.getElementById(\"SpeedR\").innerText = \"0.0000\";\
+          document.getElementById(\"Distance\").innerText = \"0.0000\";\
+      }\
+    };\
+    xhr.send();\
+  }\
  </script>";
 
     htmlIndex += "</body></html>";
@@ -159,7 +141,7 @@ void handleRoot(AsyncWebServerRequest *request)
   if (!request->authenticate(www_username, www_password))
     return request->requestAuthentication();
 
-  request->send(200, "text/html", htmlIndex(avoid_en));
+  request->send(200, "text/html", htmlIndex(avoidance_en, false));
 }
 
 void handleUpdate(AsyncWebServerRequest *request)
@@ -172,10 +154,7 @@ void handleUpdate(AsyncWebServerRequest *request)
     + "\"Angle\": " + String(myBala.getRoll(),2) + "," 
     + "\"SpeedL\": " + String(myBala.getSpeedL()) + "," 
     + "\"SpeedR\": " + String(myBala.getSpeedR()) + ","
-    + "\"Distance\": " + String(dist_cm) + ","
-    + "\"GyroX\": " + String(myBala.getGyroX(),2) + ","
-    + "\"GyroY\": " + String(myBala.getGyroY(),2) + ","
-    + "\"GyroZ\": " + String(myBala.getGyroZ(),2) + "}");
+    + "\"Distance\": " + String(dist_cm) + "}");
 }
 
 void handleTuning(AsyncWebServerRequest *request)
@@ -208,15 +187,18 @@ void handleMotion(AsyncWebServerRequest *request)
   request->redirect("/");    
 }
 
-void handleSwitch(AsyncWebServerRequest *request) 
+void handleMode(AsyncWebServerRequest *request) 
 {
   if (!request->authenticate(www_username, www_password))
     return request->requestAuthentication();
    
-    Serial.print("ok");
-    Serial.print(request->arg((size_t)0));
-    avoid_en = (String(request->arg((size_t)0)) == String("on"));
-    request->redirect("/"); 
+  if (request->argName((size_t)0) == "Avoidance") 
+  {
+    avoidance_en = (String(request->arg((size_t)0)) == String("on"));
+    if (!avoidance_en) myFlash.initEEPROM(myBala);  // if quit avoidance mode, reset original parameters (especially 'movement_step')
+  }
+
+  request->redirect("/"); 
 }
 
 void handleNotFound(AsyncWebServerRequest *request) 
@@ -239,8 +221,8 @@ void WiFiControl(void *parameter)
   WiFi.softAP(ssid, password);
 
   server.on("/", handleRoot);
-  server.on("/SW",handleSwitch);
   server.on("/Update", handleUpdate);
+  server.on("/Mode", HTTP_POST, handleMode);
   server.on("/Tuning", HTTP_GET, handleRoot);
   server.on("/Tuning", HTTP_POST, handleTuning);
   server.on("/Motion", HTTP_GET, handleRoot);
