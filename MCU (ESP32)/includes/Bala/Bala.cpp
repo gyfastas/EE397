@@ -162,8 +162,8 @@ int16_t Bala::turn()
 	int16_t Turn;
 	if (abs(this->turn_step - 0) < 0.000001)			// if not in turn
 	{
-		if (this->movement == 0) Turn_Target = 0;									// if stay, do not adjust
-		Turn_Target = ((this->movement > 0) ? -1 : +1) * this->target_turn_base;    // if go straight, adjust
+		if (this->movement == 0) Turn_Target = 0;									     // if stay, do not adjust
+		else Turn_Target = ((this->movement > 0) ? -1 : +1) * this->target_turn_base;    // if go straight, adjust
 	}
 	else
 		Turn_Target += this->turn_step;

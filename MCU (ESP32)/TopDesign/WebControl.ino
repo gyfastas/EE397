@@ -36,16 +36,18 @@ String htmlGenerateOneParameter(uint8_t id, String name, uint8_t precision)
   return div;  
 }
 
-String htmlGenerateSwitch(uint8_t checked, String id, String label)
+String htmlGenerateSwitch(uint8_t checked, String id, String label, String handle)
 {
-  String sw = String("<div style = \"margin-top:10px;margin-left:300px;\">")
+  String sw = String("<div style = \"margin-top:10px;\">")
   + String("<input type = \"checkbox\"") 
   + ((checked) ? String(" checked ") : String(" "))
   + String("id = \"")
   + id
-  + String("\" onClick = \"checkboxOnclick()\">")
+  + String("\" onClick = \"")
+  + handle
+  + String("()\">")
   + label
-  + String("</div></br>");
+  + String("</div>");
   return sw;
 }
 
@@ -55,9 +57,10 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
 
   htmlIndex += "<div>";
 
-  htmlIndex += htmlGenerateSwitch(avoidance, String("Avoidance"), String("Avoidance Mode"));
+  htmlIndex += htmlGenerateSwitch(avoidance, String("Avoidance"), String("Avoidance Mode"), String("avoidanceOnclick"));
+  htmlIndex += htmlGenerateSwitch(track, String("Track"), String("Track Mode"), String("trackOnclick"));
 
-  htmlIndex += "<div style = \"margin-top:10px;margin-bottom:10px;\"><table border =\"2\"><tr> \
+  htmlIndex += "</br><div style = \"margin-top:10px;margin-bottom:10px;\"><table border =\"2\"><tr> \
   <td width = \"100\">Battery:<span id = 'Battery'></span></td> \
   <td width = \"100\">Angle:<span id = 'Angle'></span></td> \
   <td width = \"100\">SpeedL:<span id = 'SpeedL'></span></td> \
@@ -91,7 +94,7 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
   htmlIndex += "</div>";
 
   htmlIndex += " <script>\
-  function checkboxOnclick(){ \
+  function avoidanceOnclick(){ \
     var xhr = new XMLHttpRequest();\
     xhr.open('POST', '/Mode');\
     xhr.setRequestHeader(\"Content-type\", \"application/x-www-form-urlencoded\");\
@@ -99,6 +102,16 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
       xhr.send(\"Avoidance=on\");\
     } else {\
       xhr.send(\"Avoidance=off\");\
+    }\
+  }\
+  function trackOnclick(){ \
+    var xhr = new XMLHttpRequest();\
+    xhr.open('POST', '/Mode');\
+    xhr.setRequestHeader(\"Content-type\", \"application/x-www-form-urlencoded\");\
+    if (document.getElementById(\"Track\").checked==true){ \
+      xhr.send(\"Track=on\");\
+    } else {\
+      xhr.send(\"Track=off\");\
     }\
   }\
   requestData(); \
@@ -121,12 +134,14 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
           document.getElementById(\"SpeedL\").innerText = \"0.0000\";\
           document.getElementById(\"SpeedR\").innerText = \"0.0000\";\
           document.getElementById(\"Distance\").innerText = \"0.0000\";\
+          document.getElementById(\"Distance\").innerText = \"0.0000\";\
         }\
       } else {\
           document.getElementById(\"Battery\").innerText = \"0.0000\";\
           document.getElementById(\"Angle\").innerText = \"0.0000\";\
           document.getElementById(\"SpeedL\").innerText = \"0.0000\";\
           document.getElementById(\"SpeedR\").innerText = \"0.0000\";\
+          document.getElementById(\"Distance\").innerText = \"0.0000\";\
           document.getElementById(\"Distance\").innerText = \"0.0000\";\
       }\
     };\
@@ -211,6 +226,20 @@ void handleMode(AsyncWebServerRequest *request)
       myFlash.initEEPROM(myBala);  // if quit avoidance mode, reset original parameters (especially 'movement_step')
     }
   }
+  else if (request->argName((size_t)0) == "Track")
+  {
+    raspberry_en = (String(request->arg((size_t)0)) == String("on"));
+    if (raspberry_en)
+    {
+      MySerial.write(0x80); MySerial.write(0x01); MySerial.write(0x81); MySerial.write(0x81);
+      Serial.println("Raspberry On!");
+    }
+    else
+    {
+      MySerial.write(0x80); MySerial.write(0x02); MySerial.write(0x81); MySerial.write(0x81);
+      Serial.println("Raspberry Off!");
+    }
+  }
 
   request->redirect("/"); 
 }
@@ -252,4 +281,5 @@ void WiFiControl(void *parameter)
 
   vTaskDelete(NULL);
 }
+
 

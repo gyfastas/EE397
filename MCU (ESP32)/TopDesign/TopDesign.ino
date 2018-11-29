@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <Flash.h>
 #include <Ultrasonic.h>
 #include <ESPAsyncWebServer.h>
+#include <HardwareSerial.h>
 
 #define EEPROM_SIZE 11
 #define EEPROM_FLAG 0x01
@@ -41,6 +42,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define ECHO 39
 #define SONIC_DIST_CM 500
 
+#define HWRX 12
+#define HWTX 14
+
 const char* ssid     = "ESP32-Access-Point";
 const char* password = "123456789";
 
@@ -56,12 +60,16 @@ Bala myBala(mpu, kfr, kfp, motorsDriver, Wire);
 Flash myFlash(EEPROM_SIZE, EEPROM_FLAG);
 Ultrasonic mySonic(TRIG, ECHO, SONIC_DIST_CM);
 
+HardwareSerial MySerial(1);
+
 // Global variables
 uint16_t distance_cm = 0;
 uint8_t avoidance_en = 0;
-uint32_t backward_time = 200;
-uint32_t turnleft_time = 500;
-uint16_t safe_distance_cm = 40;
+uint32_t backward_time = 500;
+uint32_t turnleft_time = 1700;
+uint16_t safe_distance_cm = 60;
+uint8_t raspberry_en = 0;
+String command;
 
 void setup() 
 {
@@ -79,7 +87,7 @@ void setup()
     "balaControl",        /* String with name of task. */
     10000,                /* Stack size in words. */
     NULL,                 /* Parameter passed as input of the task */
-    3,                    /* Priority of the task. */
+    4,                    /* Priority of the task. */
     NULL,                 /* Task handle. */
     1);                   /* Run on core 1. */
 
@@ -102,6 +110,16 @@ void setup()
     2,                    /* Priority of the task. */
     NULL,                 /* Task handle. */
     0);                   /* Run on core 0. */
+
+  // Create a task on RTOS for communication with raspberry
+  xTaskCreatePinnedToCore(
+    raspberryControl,     /* Task function. */
+    "raspberryControl",   /* String with name of task. */
+    10000,                /* Stack size in words. */
+    NULL,                 /* Parameter passed as input of the task */
+    3,                    /* Priority of the task. */
+    NULL,                 /* Task handle. */
+    0);                   /* Run on core 0. */ 
   
 }
 
