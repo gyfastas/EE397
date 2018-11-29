@@ -67,6 +67,8 @@ private:
 	uint8_t Velocity_Period;
 	uint8_t cardown_limen;
 
+	uint8_t termination_flag;
+
 	// PID parameters
 	double Balance_Kp, Balance_Kd;
 	double Velocity_Kp, Velocity_Ki;

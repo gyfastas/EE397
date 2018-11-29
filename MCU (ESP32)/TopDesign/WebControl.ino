@@ -31,7 +31,7 @@ String htmlGenerateOneParameter(uint8_t id, String name, uint8_t precision)
   + String("<div style = \"float:left;\"><span id = 'K")
   + String(id-1)
   + String("'></span>") 
-  + String(myBala.getParaK(id-1),precision) 
+  + ((id < 12) ? String(myBala.getParaK(id-1),precision) : ((id == 12) ? String(safe_distance_cm) : ((id == 13) ? String(backward_time) : String(turnleft_time))))
   + String("</div></div></br>");
   return div;  
 }
@@ -83,7 +83,10 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
   htmlIndex += htmlGenerateOneParameter(8, String("Target_Angle"), 2);
   htmlIndex += htmlGenerateOneParameter(9, String("Movement_Step"), 2);
   htmlIndex += htmlGenerateOneParameter(10, String("Turn_Base"), 2);
-  htmlIndex += htmlGenerateOneParameter(11, String("Turn_Step"), 2);  
+  htmlIndex += htmlGenerateOneParameter(11, String("Turn_Step"), 2); 
+  htmlIndex += htmlGenerateOneParameter(12, String("Safe_Distance"), 0); 
+  htmlIndex += htmlGenerateOneParameter(13, String("Backward_Time"), 0);
+  htmlIndex += htmlGenerateOneParameter(14, String("Turnleft_Time"), 0);
 
   htmlIndex += "</div>";
 
@@ -154,7 +157,7 @@ void handleUpdate(AsyncWebServerRequest *request)
     + "\"Angle\": " + String(myBala.getRoll(),2) + "," 
     + "\"SpeedL\": " + String(myBala.getSpeedL()) + "," 
     + "\"SpeedR\": " + String(myBala.getSpeedR()) + ","
-    + "\"Distance\": " + String(dist_cm) + "}");
+    + "\"Distance\": " + String(distance_cm) + "}");
 }
 
 void handleTuning(AsyncWebServerRequest *request)
@@ -162,8 +165,15 @@ void handleTuning(AsyncWebServerRequest *request)
   if (!request->authenticate(www_username, www_password))
     return request->requestAuthentication();
 
-  myBala.setParaK((uint8_t)(request->argName((size_t)0)).toInt()-1, request->arg((size_t)0).toFloat());
-  myFlash.updateEEPROM(myBala);
+  uint8_t id = (uint8_t)(request->argName((size_t)0)).toInt();
+  if (id < 12)
+  {
+    myBala.setParaK(id-1, request->arg((size_t)0).toFloat());
+    myFlash.updateEEPROM(myBala);
+  }
+  else if (id == 12) safe_distance_cm = (uint16_t)(request->arg((size_t)0).toFloat());
+  else if (id == 13) backward_time = (uint16_t)(request->arg((size_t)0).toFloat());
+  else if (id == 14) turnleft_time = (uint16_t)(request->arg((size_t)0).toFloat());
   
   request->redirect("/");
 }
@@ -195,7 +205,11 @@ void handleMode(AsyncWebServerRequest *request)
   if (request->argName((size_t)0) == "Avoidance") 
   {
     avoidance_en = (String(request->arg((size_t)0)) == String("on"));
-    if (!avoidance_en) myFlash.initEEPROM(myBala);  // if quit avoidance mode, reset original parameters (especially 'movement_step')
+    if (!avoidance_en) 
+    {
+      myBala.stop();
+      myFlash.initEEPROM(myBala);  // if quit avoidance mode, reset original parameters (especially 'movement_step')
+    }
   }
 
   request->redirect("/"); 

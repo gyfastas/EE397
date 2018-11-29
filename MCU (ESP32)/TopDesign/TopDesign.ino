@@ -57,8 +57,11 @@ Flash myFlash(EEPROM_SIZE, EEPROM_FLAG);
 Ultrasonic mySonic(TRIG, ECHO, SONIC_DIST_CM);
 
 // Global variables
-uint16_t dist_cm = 0;
+uint16_t distance_cm = 0;
 uint8_t avoidance_en = 0;
+uint32_t backward_time = 200;
+uint32_t turnleft_time = 500;
+uint16_t safe_distance_cm = 40;
 
 void setup() 
 {

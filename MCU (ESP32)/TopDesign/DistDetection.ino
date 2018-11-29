@@ -27,11 +27,11 @@ void distDetection(void *parameter)
 
   while(1)
   {
-    static uint32_t detect_interval = millis() + 100;
+    static uint32_t detect_interval = millis() + 20;
     if (millis() > detect_interval) 
     {
-      detect_interval = millis() + 100;
-      dist_cm = mySonic.ping_cm();
+      detect_interval = millis() + 20;
+      distance_cm = mySonic.ping_cm();
     }
     
     // finite state machine
@@ -45,7 +45,7 @@ void distDetection(void *parameter)
       {
       case 0:  // state 0 : move forward (if no obstacle)
         myBala.move(1);      // move forward
-        if (dist_cm < 40)    // safe distance : 40 cm
+        if (distance_cm < safe_distance_cm)    // safe distance : 40 cm
         {
           myBala.move(2);    // move backward to avoid hitting the obstacle
           state_timer = millis();
@@ -53,7 +53,7 @@ void distDetection(void *parameter)
         }
         break;
       case 1:  // state 1 : move backward (to avoid hitting the obstacle)
-        if (millis() - state_timer > 200) // move backward for 200 ms
+        if (millis() - state_timer > backward_time) // move backward for 200 ms
         {
           myBala.move(0);
           myBala.turn(1);    // turn left to bypass the obstacle
@@ -62,10 +62,15 @@ void distDetection(void *parameter)
         }
         break;
       case 2:  // state 2 : turn left (to bypass the obstacle)
-        if (dist_cm > 40)    // if no obstacle, return to state 0
+        // if (distance_cm > safe_distance_cm)    // if no obstacle, return to state 0
+        // {
+        //   myBala.turn(0);
+        //   state = 0;
+        // }
+        if (millis() - state_timer > turnleft_time)
         {
           myBala.turn(0);
-          state = 0;
+          state = 0;          
         }
         break;
       default: break;

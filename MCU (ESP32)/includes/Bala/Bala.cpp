@@ -80,6 +80,8 @@ Bala::Bala(MPU6050 &m, Kalman &kfr, Kalman &kfp, Tb6612fng &tb, TwoWire &w)
 
 	this->movement = 0;
 	this->turn_step = 0;
+
+	this->termination_flag = 0;
 }
 
 void Bala::_constrain(int16_t &val, int16_t low, int16_t high)
@@ -149,6 +151,7 @@ int16_t Bala::velocity(int16_t target)
 	Encoder_Int += Encoder;													     // integrate
 	Encoder_Int -= this->movement;                                               // motion cotrol : move forword and backward
 	this->_constrain(Encoder_Int, -10000, +10000);
+	Encoder_Int = (this->termination_flag) ? 0 : Encoder_Int;                    // if terminate abnormally, clear the integrate
 	Velocity = this->Velocity_Kp * Encoder + this->Velocity_Ki * Encoder_Int;
 	return Velocity;
 }
@@ -225,11 +228,11 @@ void Bala::run()
 	// Battery voltage sample
 	Voltage_Count++;                                   // counter for average
 	Voltage_Sum += analogRead(BATTERY_VOLTAGE_TEST);   // sample battery voltage and integrate
-	if(Voltage_Count == 200)                           // calculate average
+	if(Voltage_Count == 100)                           // calculate average
 	{
-		Voltage_Sum /= 200; 
-		// voltage = sample / 1024 * VRef * 11, where VRef is 2.2V(ideal) at 6dB attenuation, in real, we set VRef = 1.75V
-		this->battery_voltage = Voltage_Sum * 0.0187988;
+		Voltage_Sum /= 100; 
+		// voltage = sample / 1024 * VRef * 11, where VRef is 2.2V(ideal) at 6dB attenuation, in real, we set VRef = 2.04V
+		this->battery_voltage = Voltage_Sum * 0.021914;
 		Voltage_Sum = 0;
 		Voltage_Count = 0;
 	}
@@ -244,16 +247,18 @@ void Bala::run()
 
 	// Tip over or low battery voltage
 	if (abs(this->roll) > this->cardown_limen /*|| battery_voltage < 10.0*/) 
-	{
-		this->setMotor(0, 0);
-		return;
-	}
+		this->termination_flag = 1;
+	else
+		this->termination_flag = 0;
 	
 	// Compute PID
 	this->PIDController();
 
 	// Motor out
-	this->setMotor(+this->Motor1, -this->Motor2);
+	if (!this->termination_flag)
+		this->setMotor(+this->Motor1, -this->Motor2);
+	else
+		this->setMotor(0, 0);
 }
 
 void Bala::stop()
