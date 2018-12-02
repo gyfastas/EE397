@@ -1,7 +1,7 @@
 import serial
 import time
-import threading
-import queue
+import multiprocess as mp
+#import queue
 
 import numpy as np, cv2, sys
 
@@ -9,9 +9,7 @@ sys.path.append('../../../')
 import hsapi as hs
 
 device = hs.GetDevice()
-enable = False
-queueLock = threading.Lock()
-imgQueue = queue.Queue(0)
+queueLock = mp.Lock()
 
 # 打开串口
 ser = serial.Serial("/dev/ttyAMA0", 115200)
@@ -41,43 +39,44 @@ def receive():
                     data1 = data[0]
                     #print(data1)
     return data1
-
+ 
 #黑线中心分析，输出偏差角tan
 def blackline(imag, th, wi, hi):
     mid = np.array([[0,0]]*10)
     #黑线中心计算
     i2 = 0
     for i1 in range(1, 10):
-        i = int((i1+10)*hi / 30) - 1
+        i = int((i1)*hi / 30) - 1
         j = 0
 
-        while ((imag[i, j] > th)or (imag[i, j+3] > th)) and (j < wi) :
+        while ((imag[i, j] > th) or (imag[i, j+3] > th)) and (j < wi-3):
             j=j+1
         j1=j
-        while (imag[i, j1] < th or imag[i, j1+3] < th)and j < wi:
+        while (imag[i, j1] < th)and j1 < wi-3:
             j1 = j1+1
-        if j != wi:
+        if j < wi-3:
             mid[i2] = [i,int((j+j1)/2)]
             i2 = i2 +1
             
-    print('--')
 
     #偏差角计算
-    if i2 == 0:
+    if i2 < 2:
         tan = -100
     else:
         tan = 0
         m = int(i2/2)
         for ii in range(0, m):
-            tan += (mid[ii+m, 1] - mid[ii, 1])*10 / hi
+            tan += (mid[ii+m, 1] - mid[ii, 1])*30 / hi
         tan = tan / m
+    print('tan=')
+    print(tan)
     return tan
 
 #图像读取分析
-def imageanalyze():
+def imageanalyze(imgQueue):
     global device
     th = 50  # 灰度阈值
-    th1 = 1  # 角度阈值
+    th1 = 3  # 角度阈值
     img = device.GetImage(True)
     img1 = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)#灰度化
     #图像缩小
@@ -89,39 +88,35 @@ def imageanalyze():
     imgQueue.put(img2)
     queueLock.release()
     #图像分析
-    """tan = blackline(img2, th, wi, hi)
-    """
-    mes = 0x46
-    """  # second = tan / 20
-    if tan > th1:
-        mes = 0x52#R
-    if tan < 0-th1:
-        mes = 0x49#L
-    if tan <= th1 and tan >= -th1:
-        mes = 0x46#F"""
+    tan = blackline(img2, th, wi, hi)
+    
+    mes = 0x53
+    #if tan > th1:
+       #mes = 0x52 #R
+    #if tan < 0-th1:
+       #mes = 0x4c #L
+    #if tan <= th1 and tan >= -th1:
+       #mes = 0x46#F
 
     return mes  # , second
 
-def motionControl():
-    global device, enable
+def motionControl(enable, imgQueue):
+    global device
     try:
-        while enable:
-            print('//')
-            mes = imageanalyze()
-            #print('33')
+        while enable.value == 1:
+            mes = imageanalyze(imgQueue)
             send(0x53)
             send(mes)
-            #print(mes)
             #time.sleep(0.5)
-            #print('11')
         device.CloseDevice()
     except:
-        enable = False
+        enable.value = 0
+        print('control')
         send(0x45) # some wrong with device, send error message and quit the thread
+    print('Quit motionControl')
 
-def displayImage():
-    global enable
-    while enable:
+def displayImage(enable, imgQueue):
+    while enable.value == 1:
         img = None
         queueLock.acquire()
         if not imgQueue.empty():
@@ -130,14 +125,15 @@ def displayImage():
         else:
             queueLock.release()
         if img is not None:
-           # cv2.namedWindow('Tracking')
             cv2.imshow('Tracking', img)
             cv2.waitKey(1)
-            #print('hh')
+    print('Quit displayImage')
     cv2.destroyAllWindows()
 
 def main():
-    global device, enable
+    global device
+    enable = mp.Value('i', 0)
+    imgQueue = mp.Queue(0)
     while True:
         #判断是否开始
         sign = receive()
@@ -145,16 +141,17 @@ def main():
             print('connect')
             try:
                 device.OpenDevice()
-                enable = True
-                threading.Thread(target=motionControl).start()
-                threading.Thread(target=displayImage).start()
+                enable.value = 1
+                mp.Process(target=motionControl, args=(enable, imgQueue)).start()
+                mp.Process(target=displayImage, args=(enable, imgQueue)).start()
             except:
-                enable = False
+                enable.value = 0
                 device = hs.GetDevice()
+                print('main')
                 send(0x45)   # device not found, send error message
         elif sign == 2:
             print('disconnect')
-            enable = False
+            enable.value = 0
 
 if __name__ == '__main__':
     try:
