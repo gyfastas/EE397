@@ -39,8 +39,12 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
   String htmlIndex = "<!DOCTYPE html><html><head><h5 align='center' style='font-size:20px;'>Bala Remote Control</h5>\
   <style>\
     .no-select{\
-      -webkit-user-select: none;\
-      user-select: none;\
+      -webkit-touch-callout:none;\
+      -webkit-user-select:none;\
+      -khtml-user-select:none;\
+      -moz-user-select:none;\
+      -ms-user-select:none;\
+      user-select:none;\
     }\
     .change_direction{\
       text-align: center;\

@@ -106,7 +106,10 @@ __组会__
 - 树莓派与ESP32通信建立，巡线功能开始实现
 
 ### Issues
-- `Issue8` : 树莓派端疑线程调用不当，通信传输慢、卡顿，图片分析算法函数中疑存在越位情况导致的死循环
+- Issue8 : 树莓派端疑线程调用不当，通信传输慢、卡顿，图片分析算法函数中疑存在越位情况导致的死循环
+
+### Solutuons
+- Issue8 : 换用多进程库multiprocess, 完善进程间变量的共享
 
 ## 12.02
 
@@ -116,10 +119,24 @@ __组会__
         PC端 : mousedown和mouseup事件
         移动端 : touchstart和touchend事件
         需对这四个事件绑定句柄函数
-        
-        存在问题 ：移动端touch事件结束后mouse事件继续触发
-        解决方法 ：在一次touchend事件句柄函数中禁用事件默认功能
         ```
     + 修改布局，所有元素居中
     + 合并checkbox的句柄函数
     + 运动状态回显部分增加显示 `树莓派端指令` （JSON包中value值为字符串时需使用双引号包裹，否则会解析失败）
+- 树莓派端多进程调度完成
+
+### Issues
+- Issue9 : Web页面，移动端touch事件结束后mouse事件继续触发
+- Issue10 : ESP32与树莓派通信时使用了Pin12，而Pin12与芯片上电时flash voltage regulator的使能相关。故树莓派上电工作时，ESP32无法正常进入工作状态
+    ```
+    After reset, the default ESP32 behaviour is to enable and configure the flash voltage regulator (VDD_SDIO) based on the level of the MTDI pin (GPIO12).
+    ```
+
+![image](images/config_fuses.png)
+
+### Solutuons
+- Issue9 : 在touchend事件句柄函数中禁用事件默认功能
+- Issue10 : 利用[espefuse-setting-flash-voltage](https://github.com/espressif/esptool/wiki/espefuse#setting-flash-voltage-vdd_sdio)工具烧断熔丝，将flash voltage直接设置为3.3V，则上电时Pin12的电平情况与flash voltage regulator无关(__此操作不可逆__)
+
+![image](images/setting_flash_voltage.png)
+![image](images/config_fuses_after.png)
