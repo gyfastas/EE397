@@ -66,10 +66,10 @@ HardwareSerial MySerial(1);
 uint16_t distance_cm = 0;
 uint8_t avoidance_en = 0;
 uint32_t backward_time = 500;
-uint32_t turnleft_time = 1700;
+uint32_t turnleft_time = 1600;
 uint16_t safe_distance_cm = 60;
 uint8_t raspberry_en = 0;
-String command;
+String command = "N";
 
 void setup() 
 {

@@ -49,19 +49,12 @@ void raspberryControl(void *parameter)
             {
               cmd[idx-1] = 0x00;
               command = String(cmd);
-              if (command == "F")
-                myBala.move(1);
-              else if (command == "B")
-                myBala.move(2);
-              else if (command == "L")
-                myBala.turn(1);
-              else if (command == "R")
-                myBala.turn(2);
-              else if (command == "S") 
-                myBala.stop();
-              else if (command == "E")  // error
-              	myBala.stop();
-              while (MySerial.available()) MySerial.read();
+              if (command == "F")       myBala.move(1);
+              else if (command == "B")  myBala.move(2);
+              else if (command == "L")  myBala.turn(1);
+              else if (command == "R")  myBala.turn(2);
+              else if (command == "S")  myBala.stop();
+              else if (command == "E")  myBala.stop(); // error 
               Serial.println(command);
               break;
             }
@@ -75,5 +68,4 @@ void raspberryControl(void *parameter)
   }
   vTaskDelete(NULL);  
 }
-
 

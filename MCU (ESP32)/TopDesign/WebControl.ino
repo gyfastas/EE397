@@ -17,139 +17,234 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 String htmlGenerateOneParameter(uint8_t id, String name, uint8_t precision)
 {
-  String div = String("<div style = \"margin-bottom:30px;\"><div style = \"float:left;margin-right:10px;\"><form id=\"")
-  + String(id)
-  + String("\" name=\"")
-  + String(id)
-  + String("\" method =\"post\" action=\"Tuning\">")
-  + name 
-  + String("  <input id=\"")
-  + String(id)
-  + String("\" name=\"")
-  + String(id)
-  + String("\" type=\"text\" /><input id=\"subControl\" name =\"subControl\" type=\"submit\" value=\"Submit\" /></form></div>")
-  + String("<div style = \"float:left;\"><span id = 'K")
-  + String(id-1)
-  + String("'></span>") 
-  + ((id < 12) ? String(myBala.getParaK(id-1),precision) : ((id == 12) ? String(safe_distance_cm) : ((id == 13) ? String(backward_time) : String(turnleft_time))))
-  + String("</div></div></br>");
-  return div;  
-}
-
-String htmlGenerateSwitch(uint8_t checked, String id, String label, String handle)
-{
-  String sw = String("<div style = \"margin-top:10px;\">")
-  + String("<input type = \"checkbox\"") 
-  + ((checked) ? String(" checked ") : String(" "))
-  + String("id = \"")
-  + id
-  + String("\" onClick = \"")
-  + handle
-  + String("()\">")
-  + label
-  + String("</div>");
-  return sw;
+  String form = name;
+  form += "<form id='";
+  form += String(id);
+  form += "' name='";
+  form += String(id);
+  form += "' method ='post' action='Tuning'>";
+  form += "<input id='";
+  form += String(id); 
+  form += "' name='";
+  form += String(id);
+  form += "' type='text'> <input id='show_para' name ='value' type='submit' style='width:70px;' value=";
+  form += ((id < 12) ? String(myBala.getParaK(id-1),precision) : ((id == 12) ? String(safe_distance_cm) : ((id == 13) ? String(backward_time) : String(turnleft_time))));
+  form += "></form>";
+   
+  return form;  
 }
 
 String htmlIndex(uint8_t avoidance, uint8_t track)
 {
-  String htmlIndex = "<!DOCTYPE html><html><head><h5>Bala Remote Control</h5></head><body>";
+  String htmlIndex = "<!DOCTYPE html><html><head><h5 align='center' style='font-size:20px;'>Bala Remote Control</h5>\
+  <style>\
+    .no-select{\
+      -webkit-user-select: none;\
+      user-select: none;\
+    }\
+    .change_direction{\
+      text-align: center;\
+      position: relative;\
+      width: 200px;\
+      height: 200px;\
+    }\
+    .direction_content{\
+      position: relative;\
+      width: 100%;\
+      height: 70%;\
+    }\
+    .direction_div{\
+      position: relative;\
+      width: 30px;\
+      height: 30px;\
+    }\
+    .left_direction{\
+      top: 30%;\
+      left: 12%; \
+    }\
+    .bottom_direction{\
+      top: 34%;\
+      left: 40%;\
+    }\
+    .right_direction{\
+      top: -13%;\
+      left: 68%;\
+    }\
+    .top_direction{\
+      top: 28%;\
+      left: 40%;\
+    }\
+    .button {\
+        border: 1;\
+        padding: 4px 20px;\
+        text-align: center;\
+        display: inline-block;\
+        font-size: 16px;\
+        margin: 4px 2px;\
+        cursor: pointer;\
+    }\
+  </style></head><body>";
 
   htmlIndex += "<div>";
 
-  htmlIndex += htmlGenerateSwitch(avoidance, String("Avoidance"), String("Avoidance Mode"), String("avoidanceOnclick"));
-  htmlIndex += htmlGenerateSwitch(track, String("Track"), String("Track Mode"), String("trackOnclick"));
+  htmlIndex += "<div style='margin-top:30px;margin-bottom:30px;' align='center'>\
+    <input"; 
+  htmlIndex += (avoidance ? String("checked") : String(" "));
+  htmlIndex +=    "type ='checkbox' id = 'Avoidance' onClick = 'onCheckboxClick()'>Avoidance Mode\
+      <input";
+  htmlIndex += (track ? String("checked") : String(" "));
+  htmlIndex +=    "style = 'margin-left:50px;' type = 'checkbox' id = 'Track' onClick = 'onCheckboxClick()'>Tracking Mode\
+  </div>";
 
-  htmlIndex += "</br><div style = \"margin-top:10px;margin-bottom:10px;\"><table border =\"2\"><tr> \
-  <td width = \"100\">Battery:<span id = 'Battery'></span></td> \
-  <td width = \"100\">Angle:<span id = 'Angle'></span></td> \
-  <td width = \"100\">SpeedL:<span id = 'SpeedL'></span></td> \
-  <td width = \"100\">SpeedR:<span id = 'SpeedR'></span></td> \
-  <td width = \"100\">Dist:<span id = 'Distance'></span></td> \
-  </tr></table></div></br>";
+  htmlIndex += "<div>\
+    <table style='margin-top:10px;margin-bottom:30px;' align='center' border ='1'>\
+        <tr>\
+      <td width = '100'>Battery:<span id = 'Battery'></span></td>\
+      <td width = '100'>Angle:<span id = 'Angle'></span></td>\
+      <td width = '100'>SpeedL:<span id = 'SpeedL'></span></td>\
+      <td width = '100'>SpeedR:<span id = 'SpeedR'></span></td>\
+      <td width = '100'>Distance:<span id = 'Distance'></span></td>\
+      <td width = '100'>Command:<span id = 'Command'></span></td>\
+        </tr>\
+    </table>\
+  </div>";
 
-  htmlIndex += "<div style = \"margin-top:10px;margin-bottom:30px;\"><form name=\"input\" action=\"Motion\" method=\"post\"> \
-  <input name=\"F\" type=\"submit\" value=\"Forward\"> \
-  <input name=\"B\" type=\"submit\" value=\"Backward\"> \
-  <input name=\"L\" type=\"submit\" value=\"Left\"> \
-  <input name=\"R\" type=\"submit\" value=\"Right\"> \
-  <input name=\"S\" type=\"submit\" value=\"Stop\"> \
-  </form></div></br>";
+  htmlIndex += "<div class='no-select'>\
+    <div style='margin: 0 auto;' class='change_direction'>\
+      <div class='direction_content'>\
+        <div class='direction_div top_direction'>\
+          <button id='F' class='button' ontouchstart='sendMotion()' ontouchend='sendStop()' onmousedown='sendMotion()' onmouseup='sendStop()'>F</button>\
+        </div>\
+        <div class='direction_div left_direction'>\
+          <button id='L' class='button' ontouchstart='sendMotion()' ontouchend='sendStop()' onmousedown='sendMotion()' onmouseup='sendStop()'>L</button>\
+        </div>\
+        <div class='direction_div bottom_direction'>\
+          <button id='B' class='button' ontouchstart='sendMotion()' ontouchend='sendStop()' onmousedown='sendMotion()' onmouseup='sendStop()'>B</button>\
+        </div>\
+        <div class='direction_div right_direction'>\
+          <button id='R' class='button' ontouchstart='sendMotion()' ontouchend='sendStop()' onmousedown='sendMotion()' onmouseup='sendStop()'>R</button>\
+        </div>\
+      </div>\
+    </div>\
+  </div>";
 
+  htmlIndex += "<table align='center'><tr><td><div style='float:left;margin-bottom:20px;'>";
+  htmlIndex += "<div style='float:left;'>";
   htmlIndex += htmlGenerateOneParameter(1, String("BKP"), 4);
+  htmlIndex += "</div><div style='float:left;margin-left:50px'>";
   htmlIndex += htmlGenerateOneParameter(2, String("BKD"), 4);
+  htmlIndex += "</div></div></td></tr></table>";
+
+  htmlIndex += "<table align='center'><tr><td><div style='float:left;margin-bottom:20px;'>";
+  htmlIndex += "<div style='float:left;'>";
   htmlIndex += htmlGenerateOneParameter(3, String("VKP"), 4);
+  htmlIndex += "</div><div style='float:left;margin-left:50px'>";
   htmlIndex += htmlGenerateOneParameter(4, String("VKI"), 4);
+  htmlIndex += "</div></div></td></tr></table>";
+
+  htmlIndex += "<table align='center'><tr><td><div style='float:left;margin-bottom:20px;'>";
+  htmlIndex += "<div style='float:left;'>";
   htmlIndex += htmlGenerateOneParameter(5, String("TKP"), 4);
+  htmlIndex += "</div><div style='float:left;margin-left:50px'>";
   htmlIndex += htmlGenerateOneParameter(6, String("TKD"), 4);
+  htmlIndex += "</div></div></td></tr></table>";
+
+  htmlIndex += "<table align='center'><tr><td><div style='float:left;margin-bottom:20px;'>";
+  htmlIndex += "<div style='float:left;'>";
   htmlIndex += htmlGenerateOneParameter(7, String("MDZ"), 2);
+  htmlIndex += "</div><div style='float:left;margin-left:50px'>";
   htmlIndex += htmlGenerateOneParameter(8, String("Target_Angle"), 2);
+  htmlIndex += "</div></div></td></tr></table>";
+
+  htmlIndex += "<table align='center'><tr><td><div style='float:left;margin-bottom:20px;'>";
+  htmlIndex += "<div style='float:left;'>";
   htmlIndex += htmlGenerateOneParameter(9, String("Movement_Step"), 2);
+  htmlIndex += "</div><div style='float:left;margin-left:50px'>";
   htmlIndex += htmlGenerateOneParameter(10, String("Turn_Base"), 2);
+  htmlIndex += "</div></div></td></tr></table>";
+
+  htmlIndex += "<table align='center'><tr><td><div style='float:left;margin-bottom:20px;'>";
+  htmlIndex += "<div style='float:left;'>";
   htmlIndex += htmlGenerateOneParameter(11, String("Turn_Step"), 2); 
-  htmlIndex += htmlGenerateOneParameter(12, String("Safe_Distance"), 0); 
+  htmlIndex += "</div><div style='float:left;margin-left:50px'>";
+  htmlIndex += htmlGenerateOneParameter(12, String("Safe_Distance"), 0);
+  htmlIndex += "</div></div></td></tr></table>";
+
+  htmlIndex += "<table align='center'><tr><td><div style='float:left;margin-bottom:20px;'>";
+  htmlIndex += "<div style='float:left;'>";
   htmlIndex += htmlGenerateOneParameter(13, String("Backward_Time"), 0);
+  htmlIndex += "</div><div style='float:left;margin-left:50px'>";
   htmlIndex += htmlGenerateOneParameter(14, String("Turnleft_Time"), 0);
+  htmlIndex += "</div></div></td></tr></table>";
 
   htmlIndex += "</div>";
 
   htmlIndex += " <script>\
-  function avoidanceOnclick(){ \
+  function onCheckboxClick(event){\
+    event = event ? event : window.event;\
+    var obj = event.srcElement ? event.srcElement : event.target;\
     var xhr = new XMLHttpRequest();\
     xhr.open('POST', '/Mode');\
-    xhr.setRequestHeader(\"Content-type\", \"application/x-www-form-urlencoded\");\
-    if (document.getElementById(\"Avoidance\").checked==true){ \
-      xhr.send(\"Avoidance=on\");\
+    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\
+    if (document.getElementById(obj.id).checked==true){ \
+      xhr.send(obj.id+'=on');\
     } else {\
-      xhr.send(\"Avoidance=off\");\
+      xhr.send(obj.id+'=off');\
     }\
   }\
-  function trackOnclick(){ \
+  function sendMotion(event){ \
+    event = event ? event : window.event;\
+    var obj = event.srcElement ? event.srcElement : event.target;\
     var xhr = new XMLHttpRequest();\
-    xhr.open('POST', '/Mode');\
-    xhr.setRequestHeader(\"Content-type\", \"application/x-www-form-urlencoded\");\
-    if (document.getElementById(\"Track\").checked==true){ \
-      xhr.send(\"Track=on\");\
-    } else {\
-      xhr.send(\"Track=off\");\
-    }\
+    xhr.open('POST', '/Motion');\
+    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\
+    xhr.send('Motion='+obj.id);\
+  }\
+  function sendStop(event){ \
+    event = event ? event : window.event;\
+    event.preventDefault(); /*Prevent click event after touch event on mobile*/\
+    var xhr = new XMLHttpRequest();\
+    xhr.open('POST', '/Motion');\
+    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\
+    xhr.send('Motion=S'); \
   }\
   requestData(); \
   setInterval(requestData, 100);\
   function requestData() {\
-    var xhr = new XMLHttpRequest();\
-    xhr.open('GET', '/Update');\
-    xhr.onload = function() {\
-      if (xhr.status === 200) {\
-        if (xhr.responseText) {\
-          var data = JSON.parse(xhr.responseText);\
-          document.getElementById(\"Battery\").innerText = data.Battery;\
-          document.getElementById(\"Angle\").innerText = data.Angle;\
-          document.getElementById(\"SpeedL\").innerText = data.SpeedL;\
-          document.getElementById(\"SpeedR\").innerText = data.SpeedR;\
-          document.getElementById(\"Distance\").innerText = data.Distance;\
-        } else {\
-          document.getElementById(\"Battery\").innerText = \"0.0000\";\
-          document.getElementById(\"Angle\").innerText = \"0.0000\";\
-          document.getElementById(\"SpeedL\").innerText = \"0.0000\";\
-          document.getElementById(\"SpeedR\").innerText = \"0.0000\";\
-          document.getElementById(\"Distance\").innerText = \"0.0000\";\
-          document.getElementById(\"Distance\").innerText = \"0.0000\";\
-        }\
+  var xhr = new XMLHttpRequest();\
+  xhr.open('GET', '/Update');\
+  xhr.onload = function() {\
+    if (xhr.status === 200) {\
+      if (xhr.responseText) {\
+        var data = JSON.parse(xhr.responseText);\
+        document.getElementById('Battery').innerText = data.Battery;\
+        document.getElementById('Angle').innerText = data.Angle;\
+        document.getElementById('SpeedL').innerText = data.SpeedL;\
+        document.getElementById('SpeedR').innerText = data.SpeedR;\
+        document.getElementById('Distance').innerText = data.Distance;\
+        document.getElementById('Command').innerText = data.Command;\
       } else {\
-          document.getElementById(\"Battery\").innerText = \"0.0000\";\
-          document.getElementById(\"Angle\").innerText = \"0.0000\";\
-          document.getElementById(\"SpeedL\").innerText = \"0.0000\";\
-          document.getElementById(\"SpeedR\").innerText = \"0.0000\";\
-          document.getElementById(\"Distance\").innerText = \"0.0000\";\
-          document.getElementById(\"Distance\").innerText = \"0.0000\";\
+        document.getElementById('Battery').innerText = '0.0000';\
+        document.getElementById('Angle').innerText = '0.0000';\
+        document.getElementById('SpeedL').innerText = '0.0000';\
+        document.getElementById('SpeedR').innerText = '0.0000';\
+        document.getElementById('Distance').innerText = '0.0000';\
+        document.getElementById('Command').innerText = 'None';\
       }\
-    };\
-    xhr.send();\
+    } else {\
+      document.getElementById('Battery').innerText = '0.0000';\
+      document.getElementById('Angle').innerText = '0.0000';\
+      document.getElementById('SpeedL').innerText = '0.0000';\
+      document.getElementById('SpeedR').innerText = '0.0000';\
+      document.getElementById('Distance').innerText = '0.0000';\
+      document.getElementById('Command').innerText = 'None';\
+    }\
+  };\
+  xhr.send();\
   }\
- </script>";
+  </script>";
 
-    htmlIndex += "</body></html>";
+  htmlIndex += "</body></html>";
 
   return htmlIndex;
 }
@@ -172,7 +267,8 @@ void handleUpdate(AsyncWebServerRequest *request)
     + "\"Angle\": " + String(myBala.getRoll(),2) + "," 
     + "\"SpeedL\": " + String(myBala.getSpeedL()) + "," 
     + "\"SpeedR\": " + String(myBala.getSpeedR()) + ","
-    + "\"Distance\": " + String(distance_cm) + "}");
+    + "\"Distance\": " + String(distance_cm) + ","
+    + "\"Command\": \"" + command + "\"}");
 }
 
 void handleTuning(AsyncWebServerRequest *request)
@@ -198,16 +294,13 @@ void handleMotion(AsyncWebServerRequest *request)
   if (!request->authenticate(www_username, www_password))
     return request->requestAuthentication();
 
-  if (request->argName((size_t)0) == "F")
-    myBala.move(1);
-  else if (request->argName((size_t)0) == "B")
-    myBala.move(2);
-  else if (request->argName((size_t)0) == "L")
-    myBala.turn(1);
-  else if (request->argName((size_t)0) == "R")
-    myBala.turn(2);
-  else if (request->argName((size_t)0) == "S") 
-    myBala.stop();
+  if (request->arg((size_t)0) == "F")       myBala.move(1);
+  else if (request->arg((size_t)0) == "B")  myBala.move(2);
+  else if (request->arg((size_t)0) == "L")  myBala.turn(1);
+  else if (request->arg((size_t)0) == "R")  myBala.turn(2);
+  else if (request->arg((size_t)0) == "S")  myBala.stop();
+
+  Serial.println(request->arg((size_t)0));
 
   request->redirect("/");    
 }
@@ -281,5 +374,4 @@ void WiFiControl(void *parameter)
 
   vTaskDelete(NULL);
 }
-
 

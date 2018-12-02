@@ -45,7 +45,7 @@ void distDetection(void *parameter)
       {
       case 0:  // state 0 : move forward (if no obstacle)
         myBala.move(1);      // move forward
-        if (distance_cm < safe_distance_cm)    // safe distance : 40 cm
+        if (distance_cm < safe_distance_cm)
         {
           myBala.move(2);    // move backward to avoid hitting the obstacle
           state_timer = millis();
@@ -53,7 +53,7 @@ void distDetection(void *parameter)
         }
         break;
       case 1:  // state 1 : move backward (to avoid hitting the obstacle)
-        if (millis() - state_timer > backward_time) // move backward for 200 ms
+        if (millis() - state_timer > backward_time)
         {
           myBala.move(0);
           myBala.turn(1);    // turn left to bypass the obstacle
