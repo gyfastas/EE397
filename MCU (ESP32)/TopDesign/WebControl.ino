@@ -203,10 +203,11 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
   function sendStop(event){ \
     event = event ? event : window.event;\
     event.preventDefault(); /*Prevent click event after touch event on mobile*/\
+    var obj = event.srcElement ? event.srcElement : event.target;\
     var xhr = new XMLHttpRequest();\
     xhr.open('POST', '/Motion');\
     xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\
-    xhr.send('Motion=S'); \
+    xhr.send('Stop='+obj.id); \
   }\
   requestData(); \
   setInterval(requestData, 100);\
@@ -294,11 +295,20 @@ void handleMotion(AsyncWebServerRequest *request)
   if (!request->authenticate(www_username, www_password))
     return request->requestAuthentication();
 
-  if (request->arg((size_t)0) == "F")       myBala.move(1);
-  else if (request->arg((size_t)0) == "B")  myBala.move(2);
-  else if (request->arg((size_t)0) == "L")  myBala.turn(1);
-  else if (request->arg((size_t)0) == "R")  myBala.turn(2);
-  else if (request->arg((size_t)0) == "S")  myBala.stop();
+  if (request->argName((size_t)0) == "Motion")
+  {
+    if (request->arg((size_t)0) == "F")       myBala.move(1);
+    else if (request->arg((size_t)0) == "B")  myBala.move(2);
+    else if (request->arg((size_t)0) == "L")  myBala.turn(1);
+    else if (request->arg((size_t)0) == "R")  myBala.turn(2);
+  }
+  else if (request->argName((size_t)0) == "Stop")
+  {
+    if (request->arg((size_t)0) == "F")       myBala.move(0);
+    else if (request->arg((size_t)0) == "B")  myBala.move(0);
+    else if (request->arg((size_t)0) == "L")  myBala.turn(0);
+    else if (request->arg((size_t)0) == "R")  myBala.turn(0);    
+  }
 
   Serial.println(request->arg((size_t)0));
 
