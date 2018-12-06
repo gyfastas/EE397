@@ -80,3 +80,34 @@ void distDetection(void *parameter)
   }
   vTaskDelete(NULL);  
 }
+
+
+/*************************************************************************/
+// Task4 :                Move Certain Distance Event
+/*************************************************************************/
+
+void moveCertainDist(void *parameter)
+{
+  while (1)
+  {
+    static double target;
+    static uint8_t direction;
+    if (move_dist_en)
+    {
+      target = target_dist;
+      direction = (target < 0);   // 0-forward, 1-backward
+      myBala.dist(1);
+      myBala.move(direction + 1);
+      while (abs(myBala.getDistance()) < abs(target)) 
+      {
+        target_dist = target - myBala.getDistance();
+        vTaskDelay(15);
+      }
+      target_dist = 0;
+      myBala.dist(0);
+      move_dist_en = 0;
+    }
+    vTaskDelay(1);
+  }
+  vTaskDelete(NULL);  
+}

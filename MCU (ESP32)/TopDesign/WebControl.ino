@@ -27,7 +27,7 @@ String htmlGenerateOneParameter(uint8_t id, String name, uint8_t precision)
   form += String(id); 
   form += "' name='";
   form += String(id);
-  form += "' type='text'> <input id='show_para' name ='value' type='submit' style='width:70px;' value=";
+  form += "' type='text'> <input id='tuning' name ='submit' type='submit' style='width:70px;' value=";
   form += ((id < 12) ? String(myBala.getParaK(id-1),precision) : ((id == 12) ? String(safe_distance_cm) : ((id == 13) ? String(backward_time) : String(turnleft_time))));
   form += "></form>";
    
@@ -132,6 +132,13 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
     </div>\
   </div>";
 
+  htmlIndex += "<table align='center' style='margin-bottom:50px;'><tr><td>Move Certain Distance (m)\
+              <form id='MCD' name='MCD' method='post' action='Motion'>\
+                <input id='MCD' name='Motion/certain' type='text'>\
+                <input id='MCD' name='submit' type='submit' style='width:70px;' value='Go'>\
+                <span id='targetDist'></span>\
+              </form></td></tr></table>";
+
   htmlIndex += "<table align='center'><tr><td><div style='float:left;margin-bottom:20px;'>";
   htmlIndex += "<div style='float:left;'>";
   htmlIndex += htmlGenerateOneParameter(1, String("BKP"), 4);
@@ -228,6 +235,7 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
         document.getElementById('SpeedR').innerText = data.SpeedR;\
         document.getElementById('Distance').innerText = data.Distance;\
         document.getElementById('Command').innerText = data.Command;\
+        document.getElementById('targetDist').innerText = data.targetDist;\
       } else {\
         document.getElementById('Battery').innerText = '0.0000';\
         document.getElementById('Angle').innerText = '0.0000';\
@@ -235,6 +243,7 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
         document.getElementById('SpeedR').innerText = '0.0000';\
         document.getElementById('Distance').innerText = '0.0000';\
         document.getElementById('Command').innerText = 'None';\
+        document.getElementById('targetDist').innerText = '0.0000';\
       }\
     } else {\
       document.getElementById('Battery').innerText = '0.0000';\
@@ -243,6 +252,7 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
       document.getElementById('SpeedR').innerText = '0.0000';\
       document.getElementById('Distance').innerText = '0.0000';\
       document.getElementById('Command').innerText = 'None';\
+      document.getElementById('targetDist').innerText = '0.0000';\
     }\
   };\
   xhr.send();\
@@ -270,10 +280,11 @@ void handleUpdate(AsyncWebServerRequest *request)
   request->send(200, "application/json",
      "{\"Battery\": " + String(myBala.getBatteryVoltage(),2) + ","
     + "\"Angle\": " + String(myBala.getRoll(),2) + "," 
-    + "\"SpeedL\": " + String(myBala.getSpeedL()) + "," 
-    + "\"SpeedR\": " + String(myBala.getSpeedR()) + ","
+    + "\"SpeedL\": " + String(myBala.getSpeedL(),2) + "," 
+    + "\"SpeedR\": " + String(myBala.getSpeedR(),2) + ","
     + "\"Distance\": " + String(distance_cm) + ","
-    + "\"Command\": \"" + command + "\"}");
+    + "\"Command\": \"" + command + "\","
+    + "\"targetDist\": " + String(target_dist, 2) + "}");
 }
 
 void handleTuning(AsyncWebServerRequest *request)
@@ -312,6 +323,11 @@ void handleMotion(AsyncWebServerRequest *request)
     else if (request->arg((size_t)0) == "B")  myBala.move(0);
     else if (request->arg((size_t)0) == "L")  myBala.turn(0);
     else if (request->arg((size_t)0) == "R")  myBala.turn(0);    
+  }
+  else if (request->argName((size_t)0) == "Motion/certain")
+  {
+    target_dist = request->arg((size_t)0).toFloat() * 100;
+    move_dist_en = 1;
   }
 
   Serial.println(request->arg((size_t)0));
@@ -388,4 +404,3 @@ void WiFiControl(void *parameter)
 
   vTaskDelete(NULL);
 }
-

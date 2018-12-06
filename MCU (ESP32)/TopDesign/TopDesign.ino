@@ -70,6 +70,8 @@ uint32_t turnleft_time = 1600;
 uint16_t safe_distance_cm = 60;
 uint8_t raspberry_en = 0;
 String command = "N";
+uint8_t move_dist_en = 0;
+double target_dist = 0;
 
 void setup() 
 {
@@ -120,6 +122,16 @@ void setup()
     3,                    /* Priority of the task. */
     NULL,                 /* Task handle. */
     0);                   /* Run on core 0. */ 
+
+  // Create a task on RTOS for moving-certain-distance event
+  xTaskCreatePinnedToCore(
+    moveCertainDist,      /* Task function. */
+    "moveCertainDist",    /* String with name of task. */
+    1000,                 /* Stack size in words. */
+    NULL,                 /* Parameter passed as input of the task */
+    1,                    /* Priority of the task. */
+    NULL,                 /* Task handle. */
+    0);                   /* Run on core 0. */
   
 }
 

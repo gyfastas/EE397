@@ -30,6 +30,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define DIRECTION_R 35
 #define BATTERY_VOLTAGE_TEST 36
 
+#define ENCODER_PULSE_PER_ROTATION 390
+#define WHEEL_DIAMETER_CM 7
+
 class Bala
 {
 private:
@@ -38,6 +41,8 @@ private:
 	Tb6612fng 		*motors;
 	Kalman 			*roll_filter;
 	Kalman			*pitch_filter;
+
+	uint8_t status;
 
 	/*------------------------- Motion status -------------------------*/
 	double battery_voltage;
@@ -51,8 +56,13 @@ private:
 	double gyrox, gyroy, gyroz;
 
 	// Wheels speed
-	int16_t speedL, speedR;
+	int16_t rotationL, rotationR;
+	double speedL, speedR;
 	int16_t Motor1, Motor2;
+
+	// Distance
+	uint8_t measure_distance;
+	double distance;
 
 	/*------------------------- Control Parameters -------------------------*/
 	double target_angle;
@@ -90,6 +100,7 @@ public:
 	Bala(MPU6050 &m, Kalman &kfr, Kalman &kfp, Tb6612fng &tb, TwoWire &w = Wire);
 
 	void begin();
+	uint8_t isbegin() { return status; }
 	void run();
 
 	double getRoll() { return roll; };
@@ -97,9 +108,10 @@ public:
 	double getGyroX() { return gyrox; };
 	double getGyroY() { return gyroy; };
 	double getGyroZ() { return gyroz; };
-	int16_t getSpeedL() { return speedL; };
-	int16_t getSpeedR() { return speedR; };
+	double getSpeedL() { return speedL; };
+	double getSpeedR() { return speedR; };
 	double getBatteryVoltage() { return battery_voltage; };
+	double getDistance() { return distance; };
 	double getParaK(uint8_t idx)
 	{
 		switch(idx)
@@ -121,6 +133,7 @@ public:
 
 	void setParaK(uint8_t idx, double val) 
 	{
+		if (!this->isbegin()) return;
 		switch(idx)
 		{
 		case 0 : Balance_Kp = val; break;
@@ -143,6 +156,7 @@ public:
 	void move(uint8_t direction, int16_t speed = 0, uint16_t duration = 0);
 	void turn(uint8_t direction, int16_t speed = 0, uint16_t duration = 0);
 	// void rotate(int16_t speed, uint16_t duration = 0);
+	void dist(uint8_t sw);
 };
 
 #endif // _BALA_H

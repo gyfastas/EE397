@@ -140,3 +140,11 @@ __组会__
 
 ![image](images/setting_flash_voltage.png)
 ![image](images/config_fuses_after.png)
+
+## 12.03
+
+- 角蜂鸟损坏，更换为普通树莓派摄像头，后续机器学习方面的处理则使用神经网络加速棒进行加速处理。
+
+## 12.06
+
+- 增加指定距离移动功能。

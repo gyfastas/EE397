@@ -16,7 +16,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 #include "Bala.h"
-#include <driver/adc.h>
 
 #define RESTRICT_PITCH
 
@@ -60,6 +59,10 @@ Bala::Bala(MPU6050 &m, Kalman &kfr, Kalman &kfp, Tb6612fng &tb, TwoWire &w)
 	this->roll_filter = &kfr;
 	this->pitch_filter = &kfp;
 
+	this->status = 0;
+
+    this->measure_distance = 0;
+    this->distance = 0;
 	this->kal_timer = micros();
 
 	this->target_angle = 0;
@@ -147,7 +150,7 @@ int16_t Bala::velocity(int16_t target)
 	static double Encoder;
 	static int16_t Encoder_Int;
 	int16_t Velocity;
-	Encoder = 0.8 * Encoder + 0.2 * ((this->speedL + this->speedR) - target);	 // apply first-order low pass filter 
+	Encoder = 0.8 * Encoder + 0.2 * ((this->rotationL + this->rotationR) - target);	 // apply first-order low pass filter 
 	Encoder_Int += Encoder;													     // integrate
 	Encoder_Int -= this->movement;                                               // motion cotrol : move forword and backward
 	this->_constrain(Encoder_Int, -10000, +10000);
@@ -215,6 +218,8 @@ void Bala::begin()
 	// Initialize MPU6050 ...
 	this->mpu->begin();
 	delay(500);	
+
+	this->status = 1;
 }
 
 void Bala::run()
@@ -240,8 +245,21 @@ void Bala::run()
 	// Encoder sample
 	if (++Velocity_Count >= this->Velocity_Period)
 	{
-		this->speedL = +Velocity_L;  Velocity_L = 0;
-		this->speedR = +Velocity_R;  Velocity_R = 0;
+		this->rotationL = +Velocity_L;  Velocity_L = 0;
+		this->rotationR = +Velocity_R;  Velocity_R = 0;
+        // speed = rotation / detection time (s) * perimeter (cm)
+        //       = rotation / (15 * Velocity_Period * 10^(-3)) * 2 * pi * diameter (cm)
+        //       = rotation * 418.879 / Velocity_Period * diameter (cm)
+        this->speedL = (this->rotationL) * 418.879 * WHEEL_DIAMETER_CM / ENCODER_PULSE_PER_ROTATION / Velocity_Count;
+        this->speedR = (this->rotationR) * 418.879 * WHEEL_DIAMETER_CM / ENCODER_PULSE_PER_ROTATION / Velocity_Count;
+        // this->speedL = (this->rotationL);
+        // this->speedR = (this->rotationR);
+        if (this->measure_distance)
+        {
+            // distance = rotation * 2 * pi * diameter (cm)
+            //          = rotation * 6.283185 * diameter (cm)
+            this->distance += ((this->rotationL + this->rotationR) / 2.0) * PI * WHEEL_DIAMETER_CM / ENCODER_PULSE_PER_ROTATION;
+        }
 		Velocity_Count = 0;
 	}
 
@@ -263,12 +281,14 @@ void Bala::run()
 
 void Bala::stop()
 {
+	if (!this->isbegin()) return;
 	this->movement = 0;
 	this->turn_step = 0;
 }
  
 void Bala::move(uint8_t direction, int16_t speed, uint16_t duration)
 {
+	if (!this->isbegin()) return;
 	if (direction == 1) this->movement = +this->movement_step;          // forward
 	else if (direction == 2) this->movement = -this->movement_step;     // backward
 	else this->movement = 0;
@@ -276,7 +296,16 @@ void Bala::move(uint8_t direction, int16_t speed, uint16_t duration)
 
 void Bala::turn(uint8_t direction, int16_t speed, uint16_t duration)
 {
+	if (!this->isbegin()) return;
 	if (direction == 1) this->turn_step = -this->turn_step_base;          // left
 	else if (direction == 2) this->turn_step = +this->turn_step_base;     // right
 	else this->turn_step = 0;	
+}
+
+void Bala::dist(uint8_t sw)
+{
+	if (!this->isbegin()) return;
+	this->stop();
+    this->distance = 0;
+    this->measure_distance = sw;
 }
