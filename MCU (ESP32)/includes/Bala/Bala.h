@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define DIRECTION_R 35
 #define BATTERY_VOLTAGE_TEST 36
 
-#define ENCODER_PULSE_PER_ROTATION 390
+#define ENCODER_PULSE_PER_ROTATION 624
 #define WHEEL_DIAMETER_CM 7
 
 class Bala
