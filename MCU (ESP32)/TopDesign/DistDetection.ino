@@ -62,11 +62,6 @@ void distDetection(void *parameter)
         }
         break;
       case 2:  // state 2 : turn left (to bypass the obstacle)
-        // if (distance_cm > safe_distance_cm)    // if no obstacle, return to state 0
-        // {
-        //   myBala.turn(0);
-        //   state = 0;
-        // }
         if (millis() - state_timer > turnleft_time)
         {
           myBala.turn(0);
@@ -77,37 +72,6 @@ void distDetection(void *parameter)
       }
     }  
     vTaskDelay(10); 
-  }
-  vTaskDelete(NULL);  
-}
-
-
-/*************************************************************************/
-// Task4 :                Move Certain Distance Event
-/*************************************************************************/
-
-void moveCertainDist(void *parameter)
-{
-  while (1)
-  {
-    static double target;
-    static uint8_t direction;
-    if (move_dist_en)
-    {
-      target = target_dist;
-      direction = (target < 0);   // 0-forward, 1-backward
-      myBala.dist(1);
-      myBala.move(direction + 1);
-      while (abs(myBala.getDistance()) < abs(target)) 
-      {
-        target_dist = target - myBala.getDistance();
-        vTaskDelay(15);
-      }
-      target_dist = 0;
-      myBala.dist(0);
-      move_dist_en = 0;
-    }
-    vTaskDelay(1);
   }
   vTaskDelete(NULL);  
 }

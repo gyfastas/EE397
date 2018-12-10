@@ -63,15 +63,24 @@ Ultrasonic mySonic(TRIG, ECHO, SONIC_DIST_CM);
 HardwareSerial MySerial(1);
 
 // Global variables
+// avoidance
 uint16_t distance_cm = 0;
 uint8_t avoidance_en = 0;
 uint32_t backward_time = 500;
 uint32_t turnleft_time = 1600;
 uint16_t safe_distance_cm = 60;
+
+// communication with raspberry
 uint8_t raspberry_en = 0;
 String command = "N";
+
+// move certain distance event
 uint8_t move_dist_en = 0;
 double target_dist = 0;
+
+// rotate certain yaw angle event
+uint8_t rotate_yaw_en = 0;
+double target_yaw = 0;
 
 void setup() 
 {
@@ -127,6 +136,16 @@ void setup()
   xTaskCreatePinnedToCore(
     moveCertainDist,      /* Task function. */
     "moveCertainDist",    /* String with name of task. */
+    1000,                 /* Stack size in words. */
+    NULL,                 /* Parameter passed as input of the task */
+    1,                    /* Priority of the task. */
+    NULL,                 /* Task handle. */
+    0);                   /* Run on core 0. */
+
+  // Create a task on RTOS for rotate-certain-yaw-angle event
+  xTaskCreatePinnedToCore(
+    rotateCertainYaw,     /* Task function. */
+    "rotateCertainYaw",   /* String with name of task. */
     1000,                 /* Stack size in words. */
     NULL,                 /* Parameter passed as input of the task */
     1,                    /* Priority of the task. */

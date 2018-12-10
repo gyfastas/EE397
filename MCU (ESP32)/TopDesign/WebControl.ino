@@ -93,10 +93,10 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
 
   htmlIndex += "<div style='margin-top:30px;margin-bottom:30px;' align='center'>\
     <input"; 
-  htmlIndex += (avoidance ? String("checked") : String(" "));
+  htmlIndex += (avoidance ? String(" checked ") : String(" "));
   htmlIndex +=    "type ='checkbox' id = 'Avoidance' onClick = 'onCheckboxClick()'>Avoidance Mode\
       <input";
-  htmlIndex += (track ? String("checked") : String(" "));
+  htmlIndex += (track ? String(" checked ") : String(" "));
   htmlIndex +=    "style = 'margin-left:50px;' type = 'checkbox' id = 'Track' onClick = 'onCheckboxClick()'>Tracking Mode\
   </div>";
 
@@ -134,9 +134,16 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
 
   htmlIndex += "<table align='center' style='margin-bottom:50px;'><tr><td>Move Certain Distance (m)\
               <form id='MCD' name='MCD' method='post' action='Motion'>\
-                <input id='MCD' name='Motion/certain' type='text'>\
+                <input id='MCD' name='MCD' type='text'>\
                 <input id='MCD' name='submit' type='submit' style='width:70px;' value='Go'>\
                 <span id='targetDist'></span>\
+              </form></td></tr></table>";
+
+  htmlIndex += "<table align='center' style='margin-bottom:50px;'><tr><td>Rotate Certain Angle (degree)\
+              <form id='RCA' name='RCA' method='post' action='Motion'>\
+                <input id='RCA' name='RCA' type='text'>\
+                <input id='RCA' name='submit' type='submit' style='width:70px;' value='Go'>\
+                <span id='targetYaw'></span>\
               </form></td></tr></table>";
 
   htmlIndex += "<table align='center'><tr><td><div style='float:left;margin-bottom:20px;'>";
@@ -236,6 +243,7 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
         document.getElementById('Distance').innerText = data.Distance;\
         document.getElementById('Command').innerText = data.Command;\
         document.getElementById('targetDist').innerText = data.targetDist;\
+        document.getElementById('targetYaw').innerText = data.targetYaw;\
       } else {\
         document.getElementById('Battery').innerText = '0.0000';\
         document.getElementById('Angle').innerText = '0.0000';\
@@ -244,6 +252,7 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
         document.getElementById('Distance').innerText = '0.0000';\
         document.getElementById('Command').innerText = 'None';\
         document.getElementById('targetDist').innerText = '0.0000';\
+        document.getElementById('targetYaw').innerText = '0.0000';\
       }\
     } else {\
       document.getElementById('Battery').innerText = '0.0000';\
@@ -253,6 +262,7 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
       document.getElementById('Distance').innerText = '0.0000';\
       document.getElementById('Command').innerText = 'None';\
       document.getElementById('targetDist').innerText = '0.0000';\
+      document.getElementById('targetYaw').innerText = '0.0000';\
     }\
   };\
   xhr.send();\
@@ -284,7 +294,8 @@ void handleUpdate(AsyncWebServerRequest *request)
     + "\"SpeedR\": " + String(myBala.getSpeedR(),2) + ","
     + "\"Distance\": " + String(distance_cm) + ","
     + "\"Command\": \"" + command + "\","
-    + "\"targetDist\": " + String(target_dist, 2) + "}");
+    + "\"targetDist\": " + String(target_dist, 2) + ","
+    + "\"targetYaw\": " + String(target_yaw, 2) + "}");
 }
 
 void handleTuning(AsyncWebServerRequest *request)
@@ -324,10 +335,15 @@ void handleMotion(AsyncWebServerRequest *request)
     else if (request->arg((size_t)0) == "L")  myBala.turn(0);
     else if (request->arg((size_t)0) == "R")  myBala.turn(0);    
   }
-  else if (request->argName((size_t)0) == "Motion/certain")
+  else if (request->argName((size_t)0) == "MCD")
   {
     target_dist = request->arg((size_t)0).toFloat() * 100;
     move_dist_en = 1;
+  }
+  else if (request->argName((size_t)0) == "RCA")
+  {
+    target_yaw = request->arg((size_t)0).toFloat();
+    rotate_yaw_en = 1;
   }
 
   Serial.println(request->arg((size_t)0));
@@ -384,6 +400,7 @@ void handleNotFound(AsyncWebServerRequest *request)
 
 void WiFiControl(void *parameter)
 {
+  WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(ssid, password);
 
   server.on("/", handleRoot);
@@ -400,7 +417,9 @@ void WiFiControl(void *parameter)
   Serial.begin(115200);
   delay(500);
 
-  Serial.println(String("Open http://") + WiFi.softAPIP() + " in your browser to see it working.");
+  Serial.print("Open http://");
+  Serial.print(WiFi.softAPIP());
+  Serial.println(" in your browser to see it working.");
 
   vTaskDelete(NULL);
 }

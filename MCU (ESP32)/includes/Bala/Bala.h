@@ -33,6 +33,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define ENCODER_PULSE_PER_ROTATION 624
 #define WHEEL_DIAMETER_CM 7
 
+#define GYROSCALE_DPS 200
+
 class Bala
 {
 private:
@@ -52,7 +54,8 @@ private:
 	uint32_t kal_timer;
 
 	// Euler angles and gyros
-	double roll, pitch;
+	uint8_t measure_yaw;
+	double roll, pitch, yaw;
 	double gyrox, gyroy, gyroz;
 
 	// Wheels speed
@@ -105,6 +108,7 @@ public:
 
 	double getRoll() { return roll; };
 	double getPitch() { return pitch; };
+	double getYaw() { return yaw; };
 	double getGyroX() { return gyrox; };
 	double getGyroY() { return gyroy; };
 	double getGyroZ() { return gyroz; };
@@ -156,7 +160,8 @@ public:
 	void move(uint8_t direction, int16_t speed = 0, uint16_t duration = 0);
 	void turn(uint8_t direction, int16_t speed = 0, uint16_t duration = 0);
 	// void rotate(int16_t speed, uint16_t duration = 0);
-	void dist(uint8_t sw);
+	void dist_en(uint8_t sw);
+	void yaw_en(uint8_t sw);
 };
 
 #endif // _BALA_H
