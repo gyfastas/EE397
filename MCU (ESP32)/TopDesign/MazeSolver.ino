@@ -23,7 +23,10 @@ void mazeSolver(void *parameter)
 {
   while(1)
   { 
-    break;
+    if (maze_solver_en)
+    {
+        
+    }
     vTaskDelay(1); 
   }
   vTaskDelete(NULL);  

@@ -38,7 +38,7 @@ String htmlGenerateOneParameter(uint8_t id, String name, uint8_t precision)
   return form;  
 }
 
-String htmlIndex(uint8_t avoidance, uint8_t track)
+String htmlIndex(uint8_t avoidance, uint8_t track, uint8_t maze)
 {
   String htmlIndex = "<!DOCTYPE html><html><head><h5 align='center' style='font-size:20px;'>Bala Remote Control</h5>\
   <style>\
@@ -102,6 +102,9 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
       <input";
   htmlIndex += (track ? String(" checked ") : String(" "));
   htmlIndex +=    "style = 'margin-left:50px;' type = 'checkbox' id = 'Track' onClick = 'onCheckboxClick()'>Tracking Mode\
+  </div>";
+  htmlIndex += (maze ? String(" checked ") : String(" "));
+  htmlIndex +=    "style = 'margin-left:50px;' type = 'checkbox' id = 'Maze' onClick = 'onCheckboxClick()'>Maze Mode\
   </div>";
 
   htmlIndex += "<div>\
@@ -388,6 +391,10 @@ void handleMode(AsyncWebServerRequest *request)
       MySerial.write(0x80); MySerial.write(0x02); MySerial.write(0x81); MySerial.write(0x81);
       Serial.println("Raspberry Off!");
     }
+  }
+  else if (request->argName((size_t)0) == "Maze")
+  {
+    maze_solver_en = (String(request->arg((size_t)0)) == String("on"));
   }
 
   request->redirect("/"); 

@@ -76,6 +76,9 @@ uint32_t backward_time = 500;
 uint32_t bypass_degree = 90;
 uint16_t safe_distance_cm = 30;
 
+// maze solver
+uint8_t maze_solver_en = 0;
+
 // communication with raspberry
 uint8_t raspberry_en = 0;
 String command = "N";
