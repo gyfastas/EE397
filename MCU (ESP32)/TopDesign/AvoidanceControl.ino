@@ -45,21 +45,20 @@ void avoidanceControl(void *parameter)
         if (millis() - state_timer > backward_time)
         {
           myBala.move(0);
-          myBala.turn(1);    // turn left to bypass the obstacle
-          state_timer = millis();
+          target_yaw = bypass_degree;   // turn certain degree to bypass the obstacle
+          rotate_yaw_en = 1;
           state = 2;
         }
         break;
       case 2:  // state 2 : turn left (to bypass the obstacle)
-        if (millis() - state_timer > turnleft_time)
-        {
-          myBala.turn(0);
-          state = 0;          
-        }
+        if (rotate_yaw_en == 0)
+          state = 0;
         break;
       default: break;
       }
-    }  
+    }
+    else
+      state = 0;
     vTaskDelay(1); 
   }
   vTaskDelete(NULL);  

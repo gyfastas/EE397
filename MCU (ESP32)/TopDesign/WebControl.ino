@@ -32,7 +32,7 @@ String htmlGenerateOneParameter(uint8_t id, String name, uint8_t precision)
   form += "' name='";
   form += String(id);
   form += "' type='text'> <input id='tuning' name ='submit' type='submit' style='width:70px;' value=";
-  form += ((id < 12) ? String(myBala.getParaK(id-1),precision) : ((id == 12) ? String(safe_distance_cm) : ((id == 13) ? String(backward_time) : String(turnleft_time))));
+  form += ((id < 12) ? String(myBala.getParaK(id-1),precision) : ((id == 12) ? String(safe_distance_cm) : ((id == 13) ? String(backward_time) : String(bypass_degree))));
   form += "></form>";
    
   return form;  
@@ -197,7 +197,7 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
   htmlIndex += "<div style='float:left;'>";
   htmlIndex += htmlGenerateOneParameter(13, String("Backward_Time"), 0);
   htmlIndex += "</div><div style='float:left;margin-left:50px'>";
-  htmlIndex += htmlGenerateOneParameter(14, String("Turnleft_Time"), 0);
+  htmlIndex += htmlGenerateOneParameter(14, String("TurnDegree (degree)"), 0);
   htmlIndex += "</div></div></td></tr></table>";
 
   htmlIndex += "</div>";
@@ -320,7 +320,7 @@ void handleTuning(AsyncWebServerRequest *request)
   }
   else if (id == 12) safe_distance_cm = (uint16_t)(request->arg((size_t)0).toFloat());
   else if (id == 13) backward_time = (uint16_t)(request->arg((size_t)0).toFloat());
-  else if (id == 14) turnleft_time = (uint16_t)(request->arg((size_t)0).toFloat());
+  else if (id == 14) bypass_degree = (uint16_t)(request->arg((size_t)0).toFloat());
   
   request->redirect("/");
 }
@@ -371,6 +371,7 @@ void handleMode(AsyncWebServerRequest *request)
     if (!avoidance_en) 
     {
       myBala.stop();
+      rotate_yaw_en = 0;
       myFlash.initEEPROM(myBala);  // if quit avoidance mode, reset original parameters (especially 'movement_step')
     }
   }

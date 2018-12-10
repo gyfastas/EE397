@@ -23,6 +23,7 @@ void distDetection(void *parameter)
 {
   // Initialize ...
   mySonic1.begin();
+  mySonic2.begin();
   delay(500);
 
   while(1)

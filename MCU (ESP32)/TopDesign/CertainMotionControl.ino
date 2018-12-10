@@ -64,7 +64,7 @@ void rotateCertainYaw(void *parameter)
       myBala.turn(0);
       myBala.yaw_en(1);
       myBala.turn(direction + 1);
-      while (abs(myBala.getYaw()) < abs(target)) 
+      while (rotate_yaw_en && abs(myBala.getYaw()) < abs(target)) 
       {
         target_yaw = target - myBala.getYaw();
         vTaskDelay(5);
@@ -74,6 +74,8 @@ void rotateCertainYaw(void *parameter)
       myBala.yaw_en(0);
       rotate_yaw_en = 0;
     }
+    else
+      myBala.yaw_en(0);
     vTaskDelay(1);
   }
   vTaskDelete(NULL);  

@@ -73,8 +73,8 @@ uint16_t distance_left_cm = 0;
 // avoidance
 uint8_t avoidance_en = 0;
 uint32_t backward_time = 500;
-uint32_t turnleft_time = 1600;
-uint16_t safe_distance_cm = 60;
+uint32_t bypass_degree = 90;
+uint16_t safe_distance_cm = 30;
 
 // communication with raspberry
 uint8_t raspberry_en = 0;
