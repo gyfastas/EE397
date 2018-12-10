@@ -16,24 +16,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 /*************************************************************************/
-// Task2 :                Ultrasonic Distance Detection
+// Task7 :                  Maze Solver
 /*************************************************************************/
 
-void distDetection(void *parameter)
+void mazeSolver(void *parameter)
 {
-  // Initialize ...
-  mySonic1.begin();
-  delay(500);
-
   while(1)
-  {
-    static uint32_t detect_interval = millis() + 50;
-    if (millis() > detect_interval) 
-    {
-      detect_interval = millis() + 50;
-      distance_forward_cm = mySonic1.ping_cm();
-      distance_left_cm = mySonic2.ping_cm();
-    }
+  { 
+    break;
     vTaskDelay(1); 
   }
   vTaskDelete(NULL);  

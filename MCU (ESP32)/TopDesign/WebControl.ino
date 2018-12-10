@@ -15,6 +15,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+/*************************************************************************/
+// Task1 :           WiFi Configuration and Remote Control
+/*************************************************************************/
+
 String htmlGenerateOneParameter(uint8_t id, String name, uint8_t precision)
 {
   String form = name;
@@ -107,7 +111,8 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
       <td width = '100'>Angle:<span id = 'Angle'></span></td>\
       <td width = '100'>SpeedL:<span id = 'SpeedL'></span></td>\
       <td width = '100'>SpeedR:<span id = 'SpeedR'></span></td>\
-      <td width = '100'>Distance:<span id = 'Distance'></span></td>\
+      <td width = '100'>DistForward:<span id = 'DistanceForward'></span></td>\
+      <td width = '100'>DistLeft:<span id = 'DistanceLeft'></span></td>\
       <td width = '100'>Command:<span id = 'Command'></span></td>\
         </tr>\
     </table>\
@@ -240,7 +245,8 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
         document.getElementById('Angle').innerText = data.Angle;\
         document.getElementById('SpeedL').innerText = data.SpeedL;\
         document.getElementById('SpeedR').innerText = data.SpeedR;\
-        document.getElementById('Distance').innerText = data.Distance;\
+        document.getElementById('DistanceForward').innerText = data.DistanceForward;\
+        document.getElementById('DistanceLeft').innerText = data.DistanceLeft;\
         document.getElementById('Command').innerText = data.Command;\
         document.getElementById('targetDist').innerText = data.targetDist;\
         document.getElementById('targetYaw').innerText = data.targetYaw;\
@@ -249,7 +255,8 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
         document.getElementById('Angle').innerText = '0.0000';\
         document.getElementById('SpeedL').innerText = '0.0000';\
         document.getElementById('SpeedR').innerText = '0.0000';\
-        document.getElementById('Distance').innerText = '0.0000';\
+        document.getElementById('DistanceForward').innerText = '0.0000';\
+        document.getElementById('DistanceLeft').innerText = '0.0000';\
         document.getElementById('Command').innerText = 'None';\
         document.getElementById('targetDist').innerText = '0.0000';\
         document.getElementById('targetYaw').innerText = '0.0000';\
@@ -259,7 +266,8 @@ String htmlIndex(uint8_t avoidance, uint8_t track)
       document.getElementById('Angle').innerText = '0.0000';\
       document.getElementById('SpeedL').innerText = '0.0000';\
       document.getElementById('SpeedR').innerText = '0.0000';\
-      document.getElementById('Distance').innerText = '0.0000';\
+      document.getElementById('DistanceForward').innerText = '0.0000';\
+      document.getElementById('DistanceLeft').innerText = '0.0000';\
       document.getElementById('Command').innerText = 'None';\
       document.getElementById('targetDist').innerText = '0.0000';\
       document.getElementById('targetYaw').innerText = '0.0000';\
@@ -292,7 +300,8 @@ void handleUpdate(AsyncWebServerRequest *request)
     + "\"Angle\": " + String(myBala.getRoll(),2) + "," 
     + "\"SpeedL\": " + String(myBala.getSpeedL(),2) + "," 
     + "\"SpeedR\": " + String(myBala.getSpeedR(),2) + ","
-    + "\"Distance\": " + String(distance_cm) + ","
+    + "\"DistanceForward\": " + String(distance_forward_cm) + ","
+    + "\"DistanceLeft\": " + String(distance_left_cm) + ","
     + "\"Command\": \"" + command + "\","
     + "\"targetDist\": " + String(target_dist, 2) + ","
     + "\"targetYaw\": " + String(target_yaw, 2) + "}");

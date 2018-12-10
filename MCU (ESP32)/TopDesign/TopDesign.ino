@@ -38,9 +38,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define MOTORR_IN2 16
 #define PWMR 17
 
-#define TRIG 25
-#define ECHO 39
-#define SONIC_DIST_CM 500
+#define TRIG1 25
+#define ECHO1 39
+#define TRIG2 33
+#define ECHO2 26
+#define SONIC_MAXDIST_CM 300
 
 #define HWRX 12
 #define HWTX 14
@@ -58,13 +60,17 @@ Kalman kfr, kfp;
 Tb6612fng motorsDriver(STANDBY, MOTORL_IN1, MOTORL_IN2, PWML, MOTORR_IN1, MOTORR_IN2, PWMR);
 Bala myBala(mpu, kfr, kfp, motorsDriver, Wire);
 Flash myFlash(EEPROM_SIZE, EEPROM_FLAG);
-Ultrasonic mySonic(TRIG, ECHO, SONIC_DIST_CM);
+Ultrasonic mySonic1(TRIG1, ECHO1, SONIC_MAXDIST_CM); // forward
+Ultrasonic mySonic2(TRIG2, ECHO2, SONIC_MAXDIST_CM); // left side
 
 HardwareSerial MySerial(1);
 
 // Global variables
+// distance detection
+uint16_t distance_forward_cm = 0;
+uint16_t distance_left_cm = 0;
+
 // avoidance
-uint16_t distance_cm = 0;
 uint8_t avoidance_en = 0;
 uint32_t backward_time = 500;
 uint32_t turnleft_time = 1600;
@@ -146,6 +152,26 @@ void setup()
   xTaskCreatePinnedToCore(
     rotateCertainYaw,     /* Task function. */
     "rotateCertainYaw",   /* String with name of task. */
+    1000,                 /* Stack size in words. */
+    NULL,                 /* Parameter passed as input of the task */
+    1,                    /* Priority of the task. */
+    NULL,                 /* Task handle. */
+    0);                   /* Run on core 0. */
+
+  // Create a task on RTOS for avoidance control
+  xTaskCreatePinnedToCore(
+    avoidanceControl,     /* Task function. */
+    "avoidanceControl",   /* String with name of task. */
+    1000,                 /* Stack size in words. */
+    NULL,                 /* Parameter passed as input of the task */
+    1,                    /* Priority of the task. */
+    NULL,                 /* Task handle. */
+    0);                   /* Run on core 0. */
+
+  // Create a task on RTOS for solving maze
+  xTaskCreatePinnedToCore(
+    mazeSolver,           /* Task function. */
+    "mazeSolver",         /* String with name of task. */
     1000,                 /* Stack size in words. */
     NULL,                 /* Parameter passed as input of the task */
     1,                    /* Priority of the task. */
