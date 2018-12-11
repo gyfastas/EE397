@@ -77,12 +77,16 @@ double bypass_degree = 85;
 uint16_t safe_distance_cm = 30;
 
 // maze solver
+uint8_t MSmode = 0;
 uint8_t maze_solver_en = 0;
+uint8_t maze_opt_switch = 0;
 uint16_t forward_distance_threshold_cm = 30;
 uint16_t left_distance_threshold_cm = 30;
 double target_yaw_left = 85;
 double target_yaw_right = -90;
 uint16_t buff_dist = 10;
+String path = "";  // buffer to store all actions: L, R, F, B
+String path_show = "";
 
 // communication with raspberry
 uint8_t raspberry_en = 0;
@@ -118,8 +122,18 @@ void setup()
 
   // Create a task on RTOS for ultrasonic distance detection
   xTaskCreatePinnedToCore(
-    distDetection,        /* Task function. */
-    "distDetection",      /* String with name of task. */
+    distForwardDetection, /* Task function. */
+    "distForwardDetection",/* String with name of task. */
+    1000,                 /* Stack size in words. */
+    NULL,                 /* Parameter passed as input of the task */
+    1,                    /* Priority of the task. */
+    NULL,                 /* Task handle. */
+    0);                   /* Run on core 0. */ 
+
+  // Create a task on RTOS for ultrasonic distance detection
+  xTaskCreatePinnedToCore(
+    distLeftDetection,    /* Task function. */
+    "distLeftDetection",  /* String with name of task. */
     1000,                 /* Stack size in words. */
     NULL,                 /* Parameter passed as input of the task */
     1,                    /* Priority of the task. */

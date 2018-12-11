@@ -57,7 +57,7 @@ String htmlGenerateOneParameter(uint8_t id, String name, uint8_t precision)
   return form;  
 }
 
-String htmlIndex(uint8_t avoidance, uint8_t track, uint8_t maze)
+String htmlIndex(uint8_t avoidance, uint8_t track, uint8_t maze, uint8_t maze_opt)
 {
   String htmlIndex = "<!DOCTYPE html><html><head><h5 align='center' style='font-size:20px;'>Bala Remote Control</h5>\
   <style>\
@@ -124,7 +124,10 @@ String htmlIndex(uint8_t avoidance, uint8_t track, uint8_t maze)
       <input";
   htmlIndex += (maze ? String(" checked ") : String(" "));
   htmlIndex +=    "style = 'margin-left:50px;' type = 'checkbox' id = 'Maze' onClick = 'onCheckboxClick()'>Maze Mode\
-  </div>";
+      <input";
+  htmlIndex += (maze_opt ? String(" checked ") : String(" "));
+  htmlIndex +=    "style = 'margin-left:50px;' type = 'checkbox' id = 'MazeOpt' onClick = 'onCheckboxClick()'>Maze Opt\
+      </div>";
 
   htmlIndex += "<div>\
     <table style='margin-top:10px;margin-bottom:30px;' align='center' border ='1'>\
@@ -133,9 +136,14 @@ String htmlIndex(uint8_t avoidance, uint8_t track, uint8_t maze)
       <td width = '100'>Angle:<span id = 'Angle'></span></td>\
       <td width = '100'>SpeedL:<span id = 'SpeedL'></span></td>\
       <td width = '100'>SpeedR:<span id = 'SpeedR'></span></td>\
+      <td width = '100'>GyroZ:<span id = 'GyroZ'></span></td>\
+        </tr>\
+        <tr>\
       <td width = '100'>DistForward:<span id = 'DistanceForward'></span></td>\
       <td width = '100'>DistLeft:<span id = 'DistanceLeft'></span></td>\
+      <td width = '100'>Mode:<span id = 'Mode'></span></td>\
       <td width = '100'>Command:<span id = 'Command'></span></td>\
+      <td width = '100'>Path:<span id = 'Path'></span></td>\
         </tr>\
     </table>\
   </div>";
@@ -291,6 +299,9 @@ String htmlIndex(uint8_t avoidance, uint8_t track, uint8_t maze)
         document.getElementById('DistanceForward').innerText = data.DistanceForward;\
         document.getElementById('DistanceLeft').innerText = data.DistanceLeft;\
         document.getElementById('Command').innerText = data.Command;\
+        document.getElementById('Path').innerText = data.Path;\
+        document.getElementById('GyroZ').innerText = data.GyroZ;\
+        document.getElementById('Mode').innerText = data.Mode;\
         document.getElementById('targetDist').innerText = data.targetDist;\
         document.getElementById('targetYaw').innerText = data.targetYaw;\
       } else {\
@@ -301,6 +312,9 @@ String htmlIndex(uint8_t avoidance, uint8_t track, uint8_t maze)
         document.getElementById('DistanceForward').innerText = '0.0000';\
         document.getElementById('DistanceLeft').innerText = '0.0000';\
         document.getElementById('Command').innerText = 'None';\
+        document.getElementById('Path').innerText = 'None';\
+        document.getElementById('GyroZ').innerText = '0.0000';\
+        document.getElementById('Mode').innerText = '0.0000';\
         document.getElementById('targetDist').innerText = '0.0000';\
         document.getElementById('targetYaw').innerText = '0.0000';\
       }\
@@ -312,6 +326,9 @@ String htmlIndex(uint8_t avoidance, uint8_t track, uint8_t maze)
       document.getElementById('DistanceForward').innerText = '0.0000';\
       document.getElementById('DistanceLeft').innerText = '0.0000';\
       document.getElementById('Command').innerText = 'None';\
+      document.getElementById('Path').innerText = 'None';\
+      document.getElementById('GyroZ').innerText = '0.0000';\
+      document.getElementById('Mode').innerText = '0.0000';\
       document.getElementById('targetDist').innerText = '0.0000';\
       document.getElementById('targetYaw').innerText = '0.0000';\
     }\
@@ -330,7 +347,7 @@ void handleRoot(AsyncWebServerRequest *request)
   if (!request->authenticate(www_username, www_password))
     return request->requestAuthentication();
 
-  request->send(200, "text/html", htmlIndex(avoidance_en, raspberry_en, maze_solver_en));
+  request->send(200, "text/html", htmlIndex(avoidance_en, raspberry_en, maze_solver_en, maze_opt_switch));
 }
 
 void handleUpdate(AsyncWebServerRequest *request)
@@ -346,8 +363,11 @@ void handleUpdate(AsyncWebServerRequest *request)
     + "\"DistanceForward\": " + String(distance_forward_cm) + ","
     + "\"DistanceLeft\": " + String(distance_left_cm) + ","
     + "\"Command\": \"" + command + "\","
-    + "\"targetDist\": " + String(target_dist, 2) + ","
-    + "\"targetYaw\": " + String(target_yaw, 2) + "}");
+    + "\"Path\": \"" + path_show + "\","
+    + "\"GyroZ\": " + String(myBala.getGyroZ(),2) + ","
+    + "\"Mode\": " + String(MSmode) + ","
+    + "\"targetDist\": " + String(target_dist,2) + ","
+    + "\"targetYaw\": " + String(target_yaw,2) + "}");
 }
 
 void handleTuning(AsyncWebServerRequest *request)
@@ -433,6 +453,7 @@ void handleMode(AsyncWebServerRequest *request)
     }
     else
     {
+      command = "N";
       myBala.stop();
       MySerial.write(0x80); MySerial.write(0x02); MySerial.write(0x81); MySerial.write(0x81);
       Serial.println("Raspberry Off!");
@@ -441,12 +462,35 @@ void handleMode(AsyncWebServerRequest *request)
   else if (request->argName((size_t)0) == "Maze")
   {
     maze_solver_en = (String(request->arg((size_t)0)) == String("on"));
-    if (!maze_solver_en)
+    if (maze_solver_en)
+    {
+      path = path_show = "";
+    }
+    else
     {
       myBala.stop();
+      move_dist_en = 0;
+      target_dist = 0;
       rotate_yaw_en = 0;
       target_yaw = 0;
     }
+  }
+  else if (request->argName((size_t)0) == "MazeOpt")
+  {
+    maze_opt_switch = (String(request->arg((size_t)0)) == String("on"));
+    if (maze_opt_switch)
+    {
+      if (path.length() == 0)
+        maze_opt_switch = 0;
+    }
+    else
+    {
+      myBala.stop();
+      move_dist_en = 0;
+      target_dist = 0;
+      rotate_yaw_en = 0;
+      target_yaw = 0;
+    }    
   }
 
   request->redirect("/"); 

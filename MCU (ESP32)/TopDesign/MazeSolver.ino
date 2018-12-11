@@ -22,134 +22,133 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 void mazeSolver(void *parameter)
 {
   while(1)
-  { 
-    static String path = "";  // buffer to store all actions: L, R, F, B
+  {
     static uint8_t state_forward = 0;
     static uint8_t state_left = 0;
     static uint8_t mode = 0;
-    static uint8_t turn_state = 0;
-    static uint8_t buff_before_turn_state = 0;
-    static uint8_t buff_after_turn_state = 0;
-    if (maze_solver_en)
+    if (maze_solver_en || maze_opt_switch)
     {
       // Judge the mode
       state_forward = distance_forward_cm > forward_distance_threshold_cm;
       state_left = distance_left_cm > left_distance_threshold_cm;
-      if (turn_state != 1) // only change mode when not in turn
-        mode = (state_left) ? 1 : ((state_forward) ? 0 : 2); // 0-forward, 1-left, 2-right
+      MSmode = mode = (state_left) ? 1 : ((state_forward) ? 0 : 2); // 0-forward, 1-left, 2-right
 
       // First pass
-      switch (mode)
+      if (!maze_opt_switch)
       {
-      case 0: // go straight
-        myBala.move(1);
-        turn_state = 0;
-      break;
-      case 1: // turn left
-        switch (turn_state)
+        switch (mode)
         {
-        case 0:
-          switch (buff_before_turn_state)
-          {
-          case 0:
-            target_dist = buff_dist;    // move forward some distance to get enough space to turn
-            move_dist_en = 1;
-            buff_before_turn_state = 1;                 
-          break;
-          case 1:
-            if (!move_dist_en)
-            {
-              buff_before_turn_state = 0; 
-              target_yaw = target_yaw_left; // start to turn
-              rotate_yaw_en = 1;
-              turn_state = 1;
-            }
-          break;
-          default: break;
-          }
+        case 0: // go straight
+          myBala.move(1);
         break;
-        case 1:
-          if (!rotate_yaw_en)
-          {   // right after turning
-            if (state_forward)
+        case 1: // turn left
+          target_dist = buff_dist;    // move forward some distance to get enough space to turn
+          move_dist_en = 1;
+          while (maze_solver_en && move_dist_en) vTaskDelay(1); // wait for moving to finish
+          if (distance_left_cm > left_distance_threshold_cm)  // check the mode again
+          {
+            target_yaw = target_yaw_left;
+            rotate_yaw_en = 1;
+            while (maze_solver_en && rotate_yaw_en) vTaskDelay(1); // wait for turning to finish
+            myBala.move(1);             // move forward until touching the wall on the left again
+            while (maze_solver_en && distance_left_cm > left_distance_threshold_cm) vTaskDelay(1); 
+            path += "L";
+            simplifyPath();
+          }
+          mode = 0;                                                    
+        break;
+        case 2: // turn right
+          target_dist = buff_dist;    // move forward some distance to get enough space to turn
+          move_dist_en = 1;
+          while (maze_solver_en && move_dist_en) vTaskDelay(1); // wait for moving to finish
+          target_yaw = target_yaw_right;
+          rotate_yaw_en = 1;
+          while (maze_solver_en && rotate_yaw_en) vTaskDelay(1); // wait for turning to finish
+          if (distance_forward_cm < forward_distance_threshold_cm)  // if the right side is also block (twice), turn right again
+          {
+            target_yaw = target_yaw_right;
+            rotate_yaw_en = 1;
+            while (maze_solver_en && rotate_yaw_en) vTaskDelay(1); // wait for turning to finish 
+            if (distance_forward_cm < forward_distance_threshold_cm)  // if the right side is once again block (trice), reach maze end
             {
-              // move forward until touching the wall on the left again
-              myBala.move(1);
-              if (state_left == 0)
-              {
-                turn_state = 0;
-                mode = 0;                        
-                buff_after_turn_state = 0;                               
-              }
+              myBala.stop();
+              // trap this task until the host turn off maze solver or turn on maze optimization
+              while (maze_solver_en && !maze_opt_switch) vTaskDelay(1);  
             }
             else
             {
-              turn_state = 0;
-              mode = 0;
+              path += "B";
+              simplifyPath();                    
             }
           }
+          else
+          {
+            path += "R";
+            simplifyPath();
+          }
+          mode = 0; 
         break;
         default: break;
         }
-      break;
-      case 2: // turn right
-        switch (turn_state)
-        {
-        case 0:
-          switch (buff_before_turn_state)
-          {
-          case 0:
-            target_dist = buff_dist;    // move forward some distance to get enough space to turn
-            move_dist_en = 1;
-            buff_before_turn_state = 1;                 
-          break;
-          case 1:
-            if (!move_dist_en)
-            {
-              buff_before_turn_state = 0; 
-              target_yaw = target_yaw_right; // start to turn
-              rotate_yaw_en = 1;
-              turn_state = 1;
-            }
-          break;
-          default: break;
-          }
-        break;
-        case 1:
-          if (!rotate_yaw_en)
-          {
-            turn_state = 0;
-            mode = 0;
-          }
-        break;
-        default: break;
-        }
-      break;
-      default: break;
       }
-
-      // Second pass: optimization
-      // TODO
+      else // Second pass: optimization
+      {
+        static uint16_t pathIndex = 0;
+        switch (mode)
+        {
+        case 0: // go straight
+          myBala.move(1);
+        break;
+        case 1: case 2:
+          if (pathIndex >= path.length()) myBala.stop();
+          else
+          {
+            switch (path[pathIndex++])
+            {
+            case 'F':
+              myBala.move(1);
+            break;
+            case 'B':
+              target_yaw = 2 * target_yaw_right;
+              rotate_yaw_en = 1;
+              while (maze_solver_en && maze_opt_switch && rotate_yaw_en) vTaskDelay(1); // wait for turning to finish
+              myBala.move(1);             // move forward until touching the wall on the left again
+              while (maze_solver_en && maze_opt_switch && distance_left_cm > left_distance_threshold_cm) vTaskDelay(1);             
+            break;
+            case 'L':
+              target_dist = buff_dist;    // move forward some distance to get enough space to turn
+              move_dist_en = 1;
+              while (maze_opt_switch && move_dist_en) vTaskDelay(1); // wait for moving to finish
+              target_yaw = target_yaw_left;
+              rotate_yaw_en = 1;
+              while (maze_opt_switch && rotate_yaw_en) vTaskDelay(1); // wait for turning to finish
+              myBala.move(1);             // move forward until touching the wall on the left again
+              while (maze_opt_switch && distance_left_cm > left_distance_threshold_cm) vTaskDelay(1);           
+            break;
+            case 'R':
+              target_dist = buff_dist;    // move forward some distance to get enough space to turn
+              move_dist_en = 1;
+              while (maze_opt_switch && move_dist_en) vTaskDelay(1); // wait for moving to finish
+              target_yaw = target_yaw_right;
+              rotate_yaw_en = 1;
+              while (maze_opt_switch && rotate_yaw_en) vTaskDelay(1); // wait for turning to finish      
+            break;
+            default: myBala.stop(); break;
+            }
+          }
+        break;
+        default: break;
+        }
+      }
     }
     else
-    {
-      mode = 0;
-      turn_state = 0;
-      buff_before_turn_state = 0;
-      buff_after_turn_state = 0;
-    }
+      MSmode = mode = 0;
     vTaskDelay(1); 
   }
   vTaskDelete(NULL);  
 }
 
-void actIntersection(String &path, char direction)
-{
-  path += direction;
-  simplifyPath(path);
-}
-
-void simplifyPath(String &path)
+void simplifyPath()
 {
   uint16_t pathLength = path.length();
 
@@ -175,7 +174,7 @@ void simplifyPath(String &path)
   // Replace all of those turns with a single one.
   switch(totalAngle)
   {
-  case   0: path[pathLength - 3] = 'S'; break;
+  case   0: path[pathLength - 3] = 'F'; break;
   case  90: path[pathLength - 3] = 'R'; break;
   case 180: path[pathLength - 3] = 'B'; break;
   case 270: path[pathLength - 3] = 'L'; break;
@@ -183,5 +182,6 @@ void simplifyPath(String &path)
   }
 
   // The path is now two steps shorter.
-  path[pathLength - 2] = 0;
+  path.remove(pathLength - 2, 2);
+  path_show = path;
 } 

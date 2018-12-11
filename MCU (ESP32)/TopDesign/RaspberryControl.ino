@@ -63,8 +63,6 @@ void raspberryControl(void *parameter)
         }
       }
     }
-    else
-      command = "N";
     vTaskDelay(1); 
   }
   vTaskDelete(NULL);  
