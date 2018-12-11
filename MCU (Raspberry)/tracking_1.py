@@ -66,6 +66,15 @@ def receive():
  
 #黑线中心分析，输出偏差角tan
 def blackline(imag, th, wi, hi):
+    '''
+
+    :param imag: 图像矩阵
+    :param th:   角度阈值
+    :param wi:   图像的宽度
+    :param hi:   图像的高度
+    :return: imag: 标注完点的图像
+             tan: 计算的角度
+    '''
     mid = np.array([[0,0]]*10)
     #黑线中心计算
     i2 = 0
@@ -73,7 +82,7 @@ def blackline(imag, th, wi, hi):
         i = int((i1+70)*hi / 90) - 1
         j = 0
 
-        while ((imag[i, j] > th) or (imag[i, j+3] > th)) and (j < wi-3):
+        while ((imag[i, j] > th) or (imag[i, j+3] > th)) and (j < wi- 3):
             j=j+1
         j1=j
         while (imag[i, j1] < th)and j1 < wi-3:
@@ -140,7 +149,6 @@ def motionControl(enable, imgQueue,imgQueuegray):
             output.truncate(0)
             send(0x53)
             send(mes)
-            #time.sleep(0.5)
     # except:
     #     enable.value = 0
     #     print('control')
