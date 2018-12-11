@@ -32,7 +32,26 @@ String htmlGenerateOneParameter(uint8_t id, String name, uint8_t precision)
   form += "' name='";
   form += String(id);
   form += "' type='text'> <input id='tuning' name ='submit' type='submit' style='width:70px;' value=";
-  form += ((id < 12) ? String(myBala.getParaK(id-1),precision) : ((id == 12) ? String(safe_distance_cm) : ((id == 13) ? String(backward_time) : String(bypass_degree))));
+  if (id < 12)
+    form += String(myBala.getParaK(id-1), precision);
+  else if (id == 12)
+    form += String(safe_distance_cm);
+  else if (id == 13)
+    form += String(backward_time);
+  else if (id == 14)
+    form += String(bypass_degree, 2);
+  else if (id == 15)
+    form += String(forward_distance_threshold_cm);
+  else if (id == 16)
+    form += String(left_distance_threshold_cm);
+  else if (id == 17)
+    form += String(target_yaw_left, 2);
+  else if (id == 18)
+    form += String(target_yaw_right, 2);
+  else if (id == 19)
+    form += String(buff_dist);
+  else if (id == 20)
+    form += String(0);
   form += "></form>";
    
   return form;  
@@ -102,7 +121,7 @@ String htmlIndex(uint8_t avoidance, uint8_t track, uint8_t maze)
       <input";
   htmlIndex += (track ? String(" checked ") : String(" "));
   htmlIndex +=    "style = 'margin-left:50px;' type = 'checkbox' id = 'Track' onClick = 'onCheckboxClick()'>Tracking Mode\
-  </div>";
+      <input";
   htmlIndex += (maze ? String(" checked ") : String(" "));
   htmlIndex +=    "style = 'margin-left:50px;' type = 'checkbox' id = 'Maze' onClick = 'onCheckboxClick()'>Maze Mode\
   </div>";
@@ -203,6 +222,27 @@ String htmlIndex(uint8_t avoidance, uint8_t track, uint8_t maze)
   htmlIndex += htmlGenerateOneParameter(14, String("TurnDegree (degree)"), 0);
   htmlIndex += "</div></div></td></tr></table>";
 
+  htmlIndex += "<table align='center'><tr><td><div style='float:left;margin-bottom:20px;'>";
+  htmlIndex += "<div style='float:left;'>";
+  htmlIndex += htmlGenerateOneParameter(15, String("Forward_Th"), 0);
+  htmlIndex += "</div><div style='float:left;margin-left:50px'>";
+  htmlIndex += htmlGenerateOneParameter(16, String("Left_Th"), 0);
+  htmlIndex += "</div></div></td></tr></table>";
+
+  htmlIndex += "<table align='center'><tr><td><div style='float:left;margin-bottom:20px;'>";
+  htmlIndex += "<div style='float:left;'>";
+  htmlIndex += htmlGenerateOneParameter(17, String("LeftDegree"), 2);
+  htmlIndex += "</div><div style='float:left;margin-left:50px'>";
+  htmlIndex += htmlGenerateOneParameter(18, String("RightDegree"), 2);
+  htmlIndex += "</div></div></td></tr></table>";
+
+  htmlIndex += "<table align='center'><tr><td><div style='float:left;margin-bottom:20px;'>";
+  htmlIndex += "<div style='float:left;'>";
+  htmlIndex += htmlGenerateOneParameter(19, String("Buff_Dist (cm)"), 2);
+  htmlIndex += "</div><div style='float:left;margin-left:50px'>";
+  htmlIndex += htmlGenerateOneParameter(20, String("None"), 0);
+  htmlIndex += "</div></div></td></tr></table>";
+
   htmlIndex += "</div>";
 
   htmlIndex += " <script>\
@@ -290,7 +330,7 @@ void handleRoot(AsyncWebServerRequest *request)
   if (!request->authenticate(www_username, www_password))
     return request->requestAuthentication();
 
-  request->send(200, "text/html", htmlIndex(avoidance_en, false));
+  request->send(200, "text/html", htmlIndex(avoidance_en, raspberry_en, maze_solver_en));
 }
 
 void handleUpdate(AsyncWebServerRequest *request)
@@ -323,8 +363,13 @@ void handleTuning(AsyncWebServerRequest *request)
   }
   else if (id == 12) safe_distance_cm = (uint16_t)(request->arg((size_t)0).toFloat());
   else if (id == 13) backward_time = (uint16_t)(request->arg((size_t)0).toFloat());
-  else if (id == 14) bypass_degree = (uint16_t)(request->arg((size_t)0).toFloat());
-  
+  else if (id == 14) bypass_degree = (double)(request->arg((size_t)0).toFloat());
+  else if (id == 15) forward_distance_threshold_cm = (uint16_t)(request->arg((size_t)0).toFloat());
+  else if (id == 16) left_distance_threshold_cm = (uint16_t)(request->arg((size_t)0).toFloat());
+  else if (id == 17) target_yaw_left = (double)(request->arg((size_t)0).toFloat());
+  else if (id == 18) target_yaw_right = (double)(request->arg((size_t)0).toFloat());
+  else if (id == 19) buff_dist = (uint16_t)(request->arg((size_t)0).toFloat());
+
   request->redirect("/");
 }
 
@@ -388,6 +433,7 @@ void handleMode(AsyncWebServerRequest *request)
     }
     else
     {
+      myBala.stop();
       MySerial.write(0x80); MySerial.write(0x02); MySerial.write(0x81); MySerial.write(0x81);
       Serial.println("Raspberry Off!");
     }
@@ -395,6 +441,12 @@ void handleMode(AsyncWebServerRequest *request)
   else if (request->argName((size_t)0) == "Maze")
   {
     maze_solver_en = (String(request->arg((size_t)0)) == String("on"));
+    if (!maze_solver_en)
+    {
+      myBala.stop();
+      rotate_yaw_en = 0;
+      target_yaw = 0;
+    }
   }
 
   request->redirect("/"); 

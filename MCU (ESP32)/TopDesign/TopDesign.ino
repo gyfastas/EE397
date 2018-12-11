@@ -73,11 +73,16 @@ uint16_t distance_left_cm = 0;
 // avoidance
 uint8_t avoidance_en = 0;
 uint32_t backward_time = 500;
-uint32_t bypass_degree = 90;
+double bypass_degree = 85;
 uint16_t safe_distance_cm = 30;
 
 // maze solver
 uint8_t maze_solver_en = 0;
+uint16_t forward_distance_threshold_cm = 30;
+uint16_t left_distance_threshold_cm = 30;
+double target_yaw_left = 85;
+double target_yaw_right = -90;
+uint16_t buff_dist = 10;
 
 // communication with raspberry
 uint8_t raspberry_en = 0;
@@ -175,7 +180,7 @@ void setup()
   xTaskCreatePinnedToCore(
     mazeSolver,           /* Task function. */
     "mazeSolver",         /* String with name of task. */
-    1000,                 /* Stack size in words. */
+    10000,                 /* Stack size in words. */
     NULL,                 /* Parameter passed as input of the task */
     1,                    /* Priority of the task. */
     NULL,                 /* Task handle. */
