@@ -65,29 +65,21 @@ def receive():
     return data1
  
 #黑线中心分析，输出偏差角tan
-def blackline(imag, th, wi, hi):
-    '''
-
-    :param imag: 图像矩阵
-    :param th:   角度阈值
-    :param wi:   图像的宽度
-    :param hi:   图像的高度
-    :return: imag: 标注完点的图像
-             tan: 计算的角度
-    '''
+def blackline(imag, th, wi, hi,flag):
+    
     mid = np.array([[0,0]]*10)
     #黑线中心计算
     i2 = 0
     for i1 in range(1, 10):
-        i = int((i1+70)*hi / 90) - 1
+        i = int((i1+75)*hi / 90) - 1
         j = 0
 
-        while ((imag[i, j] > th) or (imag[i, j+3] > th)) and (j < wi- 3):
+        while ((imag[i, j] > th) or (imag[i, j+3] > th)) and (j < wi-4):
             j=j+1
         j1=j
-        while (imag[i, j1] < th)and j1 < wi-3:
+        while (imag[i, j1] < th)and j1 < wi-4:
             j1 = j1+1
-        if j < wi-3:
+        if j < wi-4:
             mid[i2] = [i,int((j+j1)/2)]
             imag[i,int((j+j1)/2)] = 255
             i2 = i2 +1
@@ -101,36 +93,50 @@ def blackline(imag, th, wi, hi):
         for ii in range(0, m):
             tan += (mid[ii+m, 1] + mid[ii, 1]) - 2*int(wi/2)
         tan = tan / m /2
+    flag = 0
+    if (((mid[0, 1]-mid[i2-1, 1])>30) and mid[i2-1, 1]>int(wi/2)):
+        flag = 0
+    elif(((mid[0, 1]-mid[i2-1, 1])>30) and mid[i2-1, 1]<int(wi/2)):
+        flag = 1
     print('tan=')
     print(tan)
-    return imag,tan
+    return flag,imag,tan
 
 #图像读取分析
 def imageanalyze(imgQueue,img,imgQueuegray):
-    th = 80  # 灰度阈值
-    th1 = 20  # 角度阈值
+    flag =1  #判断左转还是右转，0为右转
+    th = 100  # 灰度阈值
+    th1 = 25  # 角度阈值
     img1 = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)#灰度化
     #图像缩小
     sp = img1.shape
     wi = int(sp[1] * 0.8)
     hi = int(sp[0] * 0.8)
     img2 = cv2.resize(img1, (wi, hi))
-    thre1 = 80
+    thre1 = 100
     ret, thresh1 = cv2.threshold(img2, thre1, 255, cv2.THRESH_BINARY)
     queueLockgray.acquire()
     imgQueuegray.put(thresh1)
     queueLockgray.release()
     
     #图像分析
-    [img3,tan] = blackline(img2, th, wi, hi)
+    [flag,img3,tan] = blackline(img2, th1, wi, hi, flag)
     queueLock.acquire()
     imgQueue.put(img3)
     queueLock.release()
     mes = 0x53
+    if tan == -100:
+
+        if flag == 0:
+            mes = 0x52
+            print('flag change')
+        elif flag ==1:
+            mes = 0x4c
+            
     if tan > th1:
-       mes = 0x4c#2 #R
-    if tan < 0-th1:
-       mes = 0x52#0x4c #L
+       mes = 0x52#2 #R
+    if tan < 0-th1 and tan !=-100:
+       mes = 0x4c#0x4c #L
 
     if tan <= th1 and tan >= -th1:
        mes = 0x46#0x46#F
@@ -141,14 +147,18 @@ def motionControl(enable, imgQueue,imgQueuegray):
     camera = PiCamera()
     output = picamera.array.PiRGBArray(camera)
     camera.resolution = (320, 240) # 图像大小
-    camera.framerate=40 # 帧
-    while enable.value == 1:
-        for frame in camera.capture_continuous(output, format="bgr", use_video_port=True):
-            img = output.array
-            mes = imageanalyze(imgQueue,img,imgQueuegray)
-            output.truncate(0)
-            send(0x53)
-            send(mes)
+    camera.framerate=30 # 帧
+    
+    for frame in camera.capture_continuous(output, format="bgr", use_video_port=True):
+        img = output.array
+        mes = imageanalyze(imgQueue,img,imgQueuegray)
+        output.truncate(0)
+        send(0x53)
+        send(mes)
+        if enable.value == 0:
+        	break
+
+            #time.sleep(0.5)
     # except:
     #     enable.value = 0
     #     print('control')
@@ -202,6 +212,7 @@ def main():
         elif sign == 2:
             print('disconnect')
             enable.value = 0
+            #camera.close()
 
 if __name__ == '__main__':
     try:
