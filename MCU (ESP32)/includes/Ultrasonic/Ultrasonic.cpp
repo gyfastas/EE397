@@ -43,5 +43,6 @@ uint32_t Ultrasonic::ping()
 }
 uint16_t Ultrasonic::ping_cm()
 {
-	return (uint16_t)(NewPingConvert(this->ping()));
+    uint32_t t = this->ping();
+	return (t == 0) ? (uint16_t)(MAX_SENSOR_DISTANCE) : (uint16_t)(NewPingConvert(t));
 }

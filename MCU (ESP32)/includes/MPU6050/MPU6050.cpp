@@ -58,13 +58,13 @@ void MPU6050::begin()
     Serial.println("WHO_AM_I Error! ");
     writeByte(MPU6050_ADDR, MPU6050_PWR_MGMT_1, 0x80); // reset
     delay(300);
-    writeByte(MPU6050_ADDR, MPU6050_PWR_MGMT_1, 0x00);   // disable sleep mode
+    writeByte(MPU6050_ADDR, MPU6050_PWR_MGMT_1, 0x00); // disable sleep mode
     delay(300);
   }
 
   writeByte(MPU6050_ADDR, MPU6050_SMPLRT_DIV, 0x13);   // sample rate: 8kHz/(7+1) = 1kHz
   writeByte(MPU6050_ADDR, MPU6050_CONFIG, 0x04);       // disable DLPF, gyro output rate = 8kHz
-  writeByte(MPU6050_ADDR, MPU6050_GYRO_CONFIG, 0x00);  // gyro range: ±200dps
+  writeByte(MPU6050_ADDR, MPU6050_GYRO_CONFIG, 0x00);  // gyro range: ±250dps
   writeByte(MPU6050_ADDR, MPU6050_ACCEL_CONFIG, 0x00); // accel range: ±2g
 }
 

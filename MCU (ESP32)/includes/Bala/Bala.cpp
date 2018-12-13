@@ -67,19 +67,19 @@ Bala::Bala(MPU6050 &m, Kalman &kfr, Kalman &kfp, Tb6612fng &tb, TwoWire &w)
 
 	this->target_angle = 0;
 	this->movement_step = 100;
-	this->target_turn_base = 3;
-	this->turn_step_base = 1.0;
+	this->target_turn_base = 0;
+	this->turn_step_base = 2.0;
 
 	this->Velocity_Period = 5;
 	this->cardown_limen = 35;
 	this->motor_dead_zone = 20;
 
-	this->Balance_Kp = 11.0;
+	this->Balance_Kp = 15.0;
 	this->Balance_Kd = 0.9;
-	this->Velocity_Kp = 1.2;
-	this->Velocity_Ki = 0.005;
-	this->Turn_Kp = 2.0;
-	this->Turn_Kd = 0.7;
+	this->Velocity_Kp = 1.4;
+	this->Velocity_Ki = 0.015;
+	this->Turn_Kp = 1.0;
+	this->Turn_Kd = 0.9;
 
 	this->movement = 0;
 	this->turn_step = 0;
@@ -117,6 +117,10 @@ void Bala::getAttitude()
 
 	// Cal delta time
 	double dt = (double)(micros() - this->kal_timer) / 1000000; 
+
+    // Cal yaw
+    if (this->measure_yaw)
+        this->yaw += (this->gyroz * dt); 
 
 	// Cal the angles using Kalman filter
 	this->roll = this->roll_filter->getAngle(newroll, this->gyrox, dt);
@@ -252,8 +256,6 @@ void Bala::run()
         //       = rotation * 418.879 / Velocity_Period * diameter (cm)
         this->speedL = (this->rotationL) * 418.879 * WHEEL_DIAMETER_CM / ENCODER_PULSE_PER_ROTATION / Velocity_Count;
         this->speedR = (this->rotationR) * 418.879 * WHEEL_DIAMETER_CM / ENCODER_PULSE_PER_ROTATION / Velocity_Count;
-        // this->speedL = (this->rotationL);
-        // this->speedR = (this->rotationR);
         if (this->measure_distance)
         {
             // distance = rotation * 2 * pi * diameter (cm)
@@ -302,10 +304,16 @@ void Bala::turn(uint8_t direction, int16_t speed, uint16_t duration)
 	else this->turn_step = 0;	
 }
 
-void Bala::dist(uint8_t sw)
+void Bala::dist_en(uint8_t sw)
 {
 	if (!this->isbegin()) return;
-	this->stop();
     this->distance = 0;
     this->measure_distance = sw;
+}
+
+void Bala::yaw_en(uint8_t sw)
+{
+    if (!this->isbegin()) return;
+    this->yaw = 0;
+    this->measure_yaw = sw;    
 }
