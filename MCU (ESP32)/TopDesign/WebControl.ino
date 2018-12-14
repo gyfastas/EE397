@@ -363,7 +363,7 @@ void handleUpdate(AsyncWebServerRequest *request)
     + "\"DistanceForward\": " + String(distance_forward_cm) + ","
     + "\"DistanceLeft\": " + String(distance_left_cm) + ","
     + "\"Command\": \"" + command + "\","
-    + "\"Path\": \"" + path_show + "\","
+    + "\"Path\": \"" + path + "\","
     + "\"GyroZ\": " + String(myBala.getGyroZ(),2) + ","
     + "\"Mode\": " + String(MSmode) + ","
     + "\"targetDist\": " + String(target_dist,2) + ","
@@ -464,7 +464,7 @@ void handleMode(AsyncWebServerRequest *request)
     maze_solver_en = (String(request->arg((size_t)0)) == String("on"));
     if (maze_solver_en)
     {
-      path = path_show = "";
+      path = "";
     }
     else
     {

@@ -86,7 +86,6 @@ double target_yaw_left = 85;
 double target_yaw_right = -90;
 uint16_t buff_dist = 10;
 String path = "";  // buffer to store all actions: L, R, F, B
-String path_show = "";
 
 // communication with raspberry
 uint8_t raspberry_en = 0;
