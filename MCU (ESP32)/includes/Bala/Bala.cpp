@@ -72,7 +72,7 @@ Bala::Bala(MPU6050 &m, Kalman &kfr, Kalman &kfp, Tb6612fng &tb, TwoWire &w)
 
 	this->Velocity_Period = 5;
 	this->cardown_limen = 35;
-	this->motor_dead_zone = 20;
+	this->motor_dead_zone = 100;
 
 	this->Balance_Kp = 15.0;
 	this->Balance_Kd = 0.9;
@@ -136,11 +136,11 @@ void Bala::setMotor(int16_t M1, int16_t M2)
 	this->_constrain(M2, -250, +250); 
 
 	// Dead Zone
-	if (abs(M1) < this->motor_dead_zone) M1 = 0;
-	if (abs(M2) < this->motor_dead_zone) M2 = 0;
+	// if (abs(M1) < this->motor_dead_zone) M1 = 0;
+	// if (abs(M2) < this->motor_dead_zone) M2 = 0;
 
 	// Map PWM signals from [-255, +255] to [-1,+1]
-	this->motors->drive((float)(M1 / 255.0), (float)(M2 / 255.0)); 
+	this->motors->drive((float)(motor_dead_zone / 100.0 * M1 / 255.0), (float)(M2 / 255.0)); 
 }
 
 int16_t Bala::balance()
@@ -167,7 +167,7 @@ int16_t Bala::turn()
 {
 	static double Turn_Target;
 	int16_t Turn;
-	if (abs(this->turn_step - 0) < 0.000001)			// if not in turn
+	if (abs(this->turn_step - 0) < 0.001)			// if not in turn
 	{
 		if (this->movement == 0) Turn_Target = 0;									     // if stay, do not adjust
 		else Turn_Target = ((this->movement > 0) ? -1 : +1) * this->target_turn_base;    // if go straight, adjust

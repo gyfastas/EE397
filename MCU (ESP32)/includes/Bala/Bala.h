@@ -70,7 +70,7 @@ private:
 	int16_t movement_step;
 	double target_turn_base;     // because our robot's weight is unbalance, the right part is heavier than the left part, we need a offset in turn loop for adjustment
 	double turn_step_base;
-	uint8_t motor_dead_zone;
+	uint16_t motor_dead_zone;
 
 	int16_t movement;
 	double turn_step;
@@ -144,7 +144,7 @@ public:
 		case 3 : Velocity_Ki = val; break;
 		case 4 : Turn_Kp = val; break;
 		case 5 : Turn_Kd = val; break;
-		case 6 : motor_dead_zone = (uint8_t)val; break;
+		case 6 : motor_dead_zone = (uint16_t)val; break;
 		case 7 : target_angle = val; break;
 		case 8 : movement_step = (int16_t)val; break;
 		case 9 : target_turn_base = val; break;

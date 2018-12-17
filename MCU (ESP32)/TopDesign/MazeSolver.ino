@@ -81,10 +81,20 @@ void mazeSolver(void *parameter)
                 while (maze_solver_en && !maze_opt_switch) vTaskDelay(1);  
               }
               else
+              {
+                if(path.endsWith("B"))
+                {
+                  path += "F";
+                  simplifyPath();
+                }
                 path += "B";
+              }
             }
             else
-              path += "R";
+            {
+              if (path.endsWith("R")) path[path.length()-1] = 'B';
+              else path += "R";
+            }
           }
           simplifyPath();
           mode = 0; 
@@ -106,14 +116,15 @@ void mazeSolver(void *parameter)
             switch (path[pathIndex++])
             {
             case 'F':
-              myBala.move(1);
+              myBala.move(1);             // move forward until touching the wall on the left again
+              while (maze_opt_switch && distance_left_cm > left_distance_threshold_cm) vTaskDelay(1); 
             break;
             case 'B':
               target_yaw = 2 * target_yaw_right;
               rotate_yaw_en = 1;
-              while (maze_solver_en && maze_opt_switch && rotate_yaw_en) vTaskDelay(1); // wait for turning to finish
+              while (maze_opt_switch && rotate_yaw_en) vTaskDelay(1); // wait for turning to finish
               myBala.move(1);             // move forward until touching the wall on the left again
-              while (maze_solver_en && maze_opt_switch && distance_left_cm > left_distance_threshold_cm) vTaskDelay(1);             
+              while (maze_opt_switch && distance_left_cm > left_distance_threshold_cm) vTaskDelay(1);             
             break;
             case 'L':
               target_dist = buff_dist;    // move forward some distance to get enough space to turn
@@ -131,7 +142,9 @@ void mazeSolver(void *parameter)
               while (maze_opt_switch && move_dist_en) vTaskDelay(1); // wait for moving to finish
               target_yaw = target_yaw_right;
               rotate_yaw_en = 1;
-              while (maze_opt_switch && rotate_yaw_en) vTaskDelay(1); // wait for turning to finish      
+              while (maze_opt_switch && rotate_yaw_en) vTaskDelay(1); // wait for turning to finish   
+              myBala.move(1);             // move forward until touching the wall on the left again
+              while (maze_opt_switch && distance_left_cm > left_distance_threshold_cm) vTaskDelay(1);    
             break;
             default: myBala.stop(); break;
             }

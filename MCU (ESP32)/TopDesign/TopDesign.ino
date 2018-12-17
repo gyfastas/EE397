@@ -42,7 +42,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define ECHO1 39
 #define TRIG2 33
 #define ECHO2 26
-#define SONIC_MAXDIST_CM 300
+#define SONIC_MAXDIST_CM 120
 
 #define HWRX 12
 #define HWTX 14
