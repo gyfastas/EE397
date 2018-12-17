@@ -148,3 +148,11 @@ __组会__
 ## 12.06
 
 - 增加指定距离移动功能。
+
+
+
+## 12.17
+
+- 增加物体检测功能（来自例程ncappzoo/live-image-object-detector)
+
+  实现细节: 需要修改live-object-detector 适配到树莓派摄像头上
