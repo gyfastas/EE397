@@ -59,30 +59,44 @@ Bala::Bala(MPU6050 &m, Kalman &kfr, Kalman &kfp, Tb6612fng &tb, TwoWire &w)
 	this->roll_filter = &kfr;
 	this->pitch_filter = &kfp;
 
+	this->status = 0;
+
+    this->measure_distance = 0;
+    this->distance = 0;
 	this->kal_timer = micros();
 
-	this->tarAngle = 0;
+	this->target_angle = 0;
+	this->movement_step = 100;
+	this->target_turn_base = 0;
+	this->turn_step_base = 2.0;
 
 	this->Velocity_Period = 5;
-
-	this->Balance_Kp = 12.0;
-	this->Balance_Kd = 10.0;
-	this->Velocity_Kp = 0.8;
-	this->Velocity_Ki = 0.004;
-	this->Velocity_Kd = 0;
-	this->Turn_Kp = 0;
-	this->Turn_Ki = 0;
-	this->Turn_Kd = 0;
-	this->Speed_Diff_K = 0;
-	
-	this->cardown_limen = 30;
+	this->cardown_limen = 35;
 	this->motor_dead_zone = 20;
+
+	this->Balance_Kp = 15.0;
+	this->Balance_Kd = 0.9;
+	this->Velocity_Kp = 1.4;
+	this->Velocity_Ki = 0.015;
+	this->Turn_Kp = 1.0;
+	this->Turn_Kd = 0.9;
+
+	this->movement = 0;
+	this->turn_step = 0;
+
+	this->termination_flag = 0;
 }
 
 void Bala::_constrain(int16_t &val, int16_t low, int16_t high)
 {
 	if (val < low) val = low;
 	else if (val > high) val = high;
+}
+
+void Bala::_constrain(double &val, double low, double high)
+{
+	if (val < low) val = low;
+	else if (val > high) val = high;	
 }
 
 void Bala::getAttitude()
@@ -97,12 +111,16 @@ void Bala::getAttitude()
 	double newroll  = atan(ay / sqrt(ax * ax + az * az)) * 57.296;
 	double newpitch = atan2(-ax, az) * 57.296;
 #endif
-	this->gyrox = gx / 131.0;
-	this->gyroy = gy / 131.0;
-	this->gyroz = gz / 131.0;
+	this->gyrox = gx / 131.0 + 3.74;
+	this->gyroy = gy / 131.0 - 1.90;
+	this->gyroz = gz / 131.0 + 0.40;
 
 	// Cal delta time
 	double dt = (double)(micros() - this->kal_timer) / 1000000; 
+
+    // Cal yaw
+    if (this->measure_yaw)
+        this->yaw += (this->gyroz * dt); 
 
 	// Cal the angles using Kalman filter
 	this->roll = this->roll_filter->getAngle(newroll, this->gyrox, dt);
@@ -127,59 +145,55 @@ void Bala::setMotor(int16_t M1, int16_t M2)
 
 int16_t Bala::balance()
 {
-	int16_t balance = this->Balance_Kp * (this->roll - this->tarAngle) + this->Balance_Kd * this->gyroy;
+	int16_t balance = this->Balance_Kp * (this->roll - this->target_angle) + this->Balance_Kd * this->gyrox;
 	return balance;
 }
 
 int16_t Bala::velocity(int16_t target)
 {
-	static double Encoder, Encoder_last;
-	static int16_t Encoder_Int, Encoder_Diff;
+	static double Encoder;
+	static int16_t Encoder_Int;
 	int16_t Velocity;
-	Encoder = 0.8 * Encoder + 0.2 * ((this->speedL + this->speedR) - target);	 // apply first-order low pass filter 
+	Encoder = 0.8 * Encoder + 0.2 * ((this->rotationL + this->rotationR) - target);	 // apply first-order low pass filter 
 	Encoder_Int += Encoder;													     // integrate
-	this->_constrain(Encoder_Int, -3000, +3000);
-	Encoder_Diff = Encoder - Encoder_last;                                       // differential
-	Encoder_last = Encoder;
-	Velocity = this->Velocity_Kp * Encoder + this->Velocity_Ki * Encoder_Int + this->Velocity_Kd * Encoder_Diff;
+	Encoder_Int -= this->movement;                                               // motion cotrol : move forword and backward
+	this->_constrain(Encoder_Int, -10000, +10000);
+	Encoder_Int = (this->termination_flag) ? 0 : Encoder_Int;                    // if terminate abnormally, clear the integrate
+	Velocity = this->Velocity_Kp * Encoder + this->Velocity_Ki * Encoder_Int;
 	return Velocity;
 }
 
 int16_t Bala::turn()
 {
-	// static int16_t Turn_Target, Turn_Convert = 3, Turn_Int;
-	// int16_t Turn;
-	// if (1 == Flag_Left)             Turn_Target += Turn_Convert;
-	// else if (1 == Flag_Right)       Turn_Target -= Turn_Convert;
-	// else Turn_Target = 0;
-	// this->_constrain(Turn_Target, -80, 80);
-	// Turn_Int += Turn_Target;													// integrate
-	// this->_constrain(Turn_Int, -3000, +3000);
-	// Turn = this->Turn_Kp * -Turn_Target + this->Turn_Ki * Turn_Int + this->Turn_Kd * this->gyroz;
-	// return Turn;
-	return 0;
+	static double Turn_Target;
+	int16_t Turn;
+	if (abs(this->turn_step - 0) < 0.000001)			// if not in turn
+	{
+		if (this->movement == 0) Turn_Target = 0;									     // if stay, do not adjust
+		else Turn_Target = ((this->movement > 0) ? -1 : +1) * this->target_turn_base;    // if go straight, adjust
+	}
+	else
+		Turn_Target += this->turn_step;
+	this->_constrain(Turn_Target, -80, 80);
+	Turn = -this->Turn_Kp * Turn_Target - this->Turn_Kd * this->gyroz;
+	return Turn;
 }
 
 void Bala::PIDController()
 {
 	static int16_t Balance_Pwm, Velocity_Pwm, Turn_Pwm;
-	static int16_t speed_diff, speed_diff_adjust;
 
 	// balance loop
 	Balance_Pwm = this->balance();
 
 	// velocity loop
 	Velocity_Pwm = this->velocity();
-	
-	// speed diff
-	speed_diff = (this->speedL - this->speedR);
-	speed_diff_adjust = (this->Speed_Diff_K * speed_diff);
 
 	// turn loop
 	Turn_Pwm = this->turn();
 
 	// blend loops
-	this->Motor1 = Balance_Pwm - Velocity_Pwm + Turn_Pwm - speed_diff_adjust;
+	this->Motor1 = Balance_Pwm - Velocity_Pwm + Turn_Pwm;
 	this->Motor2 = Balance_Pwm - Velocity_Pwm - Turn_Pwm;
 }
 
@@ -191,9 +205,8 @@ void Bala::begin()
 	// Initialize adc
 	adcAttachPin(BATTERY_VOLTAGE_TEST);
 	adcStart(BATTERY_VOLTAGE_TEST);
-	analogReadResolution(10); 		// 10-bits resolution, maximum raw value is 1023
+	analogReadResolution(10);       // 10-bits resolution, maximum raw value is 1023
 	analogSetAttenuation(ADC_6db);  // at 6dB attenuation, the maximum voltage is 2.2V
-	pinMode(BATTERY_VOLTAGE_TEST, INPUT);
 
 	// Initialize encoder ...
 	pinMode(ENCODER_L, INPUT);
@@ -209,45 +222,98 @@ void Bala::begin()
 	// Initialize MPU6050 ...
 	this->mpu->begin();
 	delay(500);	
+
+	this->status = 1;
 }
 
 void Bala::run()
 {
 	static uint8_t Velocity_Count, Turn_Count, Voltage_Count;
-	static uint16_t Voltage_Sum;
+	static uint32_t Voltage_Sum;
 
 	// Attitude sample
 	this->getAttitude();
 
 	// Battery voltage sample
-  	Voltage_Count++;                                   // counter for average
-  	Voltage_Sum += analogRead(BATTERY_VOLTAGE_TEST);   // sample battery voltage and integrate
- 	if(Voltage_Count == 200)                           // calculate average
- 	{
- 		// voltage = sample / 1024 * VRef * 11, where VRef is 2.2V at 6dB attenuaton
-  		this->battery_voltage = Voltage_Sum * 0.00011816;
-  		Voltage_Sum = 0;
-  		Voltage_Count = 0;
-  	}
+	Voltage_Count++;                                   // counter for average
+	Voltage_Sum += analogRead(BATTERY_VOLTAGE_TEST);   // sample battery voltage and integrate
+	if(Voltage_Count == 100)                           // calculate average
+	{
+		Voltage_Sum /= 100; 
+		// voltage = sample / 1024 * VRef * 11, where VRef is 2.2V(ideal) at 6dB attenuation, in real, we set VRef = 2.04V
+		this->battery_voltage = Voltage_Sum * 0.021914;
+		Voltage_Sum = 0;
+		Voltage_Count = 0;
+	}
 
 	// Encoder sample
 	if (++Velocity_Count >= this->Velocity_Period)
 	{
-		this->speedL = +Velocity_L;  Velocity_L = 0;
-		this->speedR = +Velocity_R;  Velocity_R = 0;
+		this->rotationL = +Velocity_L;  Velocity_L = 0;
+		this->rotationR = +Velocity_R;  Velocity_R = 0;
+        // speed = rotation / detection time (s) * perimeter (cm)
+        //       = rotation / (15 * Velocity_Period * 10^(-3)) * 2 * pi * diameter (cm)
+        //       = rotation * 418.879 / Velocity_Period * diameter (cm)
+        this->speedL = (this->rotationL) * 418.879 * WHEEL_DIAMETER_CM / ENCODER_PULSE_PER_ROTATION / Velocity_Count;
+        this->speedR = (this->rotationR) * 418.879 * WHEEL_DIAMETER_CM / ENCODER_PULSE_PER_ROTATION / Velocity_Count;
+        if (this->measure_distance)
+        {
+            // distance = rotation * 2 * pi * diameter (cm)
+            //          = rotation * 6.283185 * diameter (cm)
+            this->distance += ((this->rotationL + this->rotationR) / 2.0) * PI * WHEEL_DIAMETER_CM / ENCODER_PULSE_PER_ROTATION;
+        }
 		Velocity_Count = 0;
 	}
 
 	// Tip over or low battery voltage
 	if (abs(this->roll) > this->cardown_limen /*|| battery_voltage < 10.0*/) 
-	{
-		this->setMotor(0, 0);
-		return;
-	}
+		this->termination_flag = 1;
+	else
+		this->termination_flag = 0;
 	
 	// Compute PID
 	this->PIDController();
 
 	// Motor out
-	this->setMotor(+this->Motor1, -this->Motor2);
+	if (!this->termination_flag)
+		this->setMotor(+this->Motor1, -this->Motor2);
+	else
+		this->setMotor(0, 0);
+}
+
+void Bala::stop()
+{
+	if (!this->isbegin()) return;
+	this->movement = 0;
+	this->turn_step = 0;
+}
+ 
+void Bala::move(uint8_t direction, int16_t speed, uint16_t duration)
+{
+	if (!this->isbegin()) return;
+	if (direction == 1) this->movement = +this->movement_step;          // forward
+	else if (direction == 2) this->movement = -this->movement_step;     // backward
+	else this->movement = 0;
+}
+
+void Bala::turn(uint8_t direction, int16_t speed, uint16_t duration)
+{
+	if (!this->isbegin()) return;
+	if (direction == 1) this->turn_step = -this->turn_step_base;          // left
+	else if (direction == 2) this->turn_step = +this->turn_step_base;     // right
+	else this->turn_step = 0;	
+}
+
+void Bala::dist_en(uint8_t sw)
+{
+	if (!this->isbegin()) return;
+    this->distance = 0;
+    this->measure_distance = sw;
+}
+
+void Bala::yaw_en(uint8_t sw)
+{
+    if (!this->isbegin()) return;
+    this->yaw = 0;
+    this->measure_yaw = sw;    
 }

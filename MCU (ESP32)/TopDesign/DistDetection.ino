@@ -16,24 +16,47 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 /*************************************************************************/
-// Task2 :                Ultrasonic Distance Detection
+// Task2-a :                Ultrasonic Distance Detection
 /*************************************************************************/
 
-void distDetection(void *parameter)
+void distForwardDetection(void *parameter)
 {
   // Initialize ...
-  mySonic.begin();
+  mySonic1.begin();
   delay(500);
 
   while(1)
   {
-    static uint32_t detect_interval = millis() + 100;
+    static uint32_t detect_interval = millis() + 10;
     if (millis() > detect_interval) 
     {
-      detect_interval = millis() + 100;
-      dist_cm = mySonic.ping_cm();
-    }  
-    vTaskDelay(10); 
+      detect_interval = millis() + 10;
+      distance_forward_cm = mySonic1.ping_cm();
+    }
+    vTaskDelay(1); 
+  }
+  vTaskDelete(NULL);  
+}
+
+/*************************************************************************/
+// Task2-b :                Ultrasonic Distance Detection
+/*************************************************************************/
+
+void distLeftDetection(void *parameter)
+{
+  // Initialize ...
+  mySonic2.begin();
+  delay(500);
+
+  while(1)
+  {
+    static uint32_t detect_interval = millis() + 10;
+    if (millis() > detect_interval) 
+    {
+      detect_interval = millis() + 10;
+      distance_left_cm = mySonic2.ping_cm();
+    }
+    vTaskDelay(1); 
   }
   vTaskDelete(NULL);  
 }

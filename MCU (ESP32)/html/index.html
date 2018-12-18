@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <h5 align='center' style='font-size:20px;'>Bala Remote Control</h5>
+    <style>
+    .no-select{
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .change_direction{
+      text-align: center;
+      position: relative;
+      width: 200px;
+      height: 200px;
+    }
+    .direction_content{
+      position: relative;
+      width: 100%;
+      height: 70%;
+    }
+    .direction_div{
+      position: relative;
+      width: 30px;
+      height: 30px;
+    }
+    .left_direction{
+      top: 30%;
+      left: 12%; 
+    }
+    .bottom_direction{
+      top: 34%;
+      left: 40%;
+    }
+    .right_direction{
+      top: -13%;
+      left: 68%;
+    }
+    .top_direction{
+      top: 28%;
+      left: 40%;
+    }
+    .button{
+        border: 1;
+        padding: 4px 20px;
+        text-align: center;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+    }
+    </style>
+  </head>
+  
+  <body>
+    <div>
+      <div style='margin-top:30px;margin-bottom:30px;' align='center'>
+        <input type='checkbox' id='Avoidance' onClick='onCheckboxClick()'>Avoidance Mode
+        <input style='margin-left:50px;' type='checkbox' id='Track' onClick='onCheckboxClick()'>Tracking Mode
+      </div>
+
+      <div>
+        <table style='margin-top:10px;margin-bottom:30px;' align='center' border='1'>
+          <tr>
+            <td width='100'>Battery:<span id='Battery'></span></td>
+            <td width='100'>Angle:<span id='Angle'></span></td>
+            <td width='100'>SpeedL:<span id='SpeedL'></span></td>
+            <td width='100'>SpeedR:<span id='SpeedR'></span></td>
+            <td width='100'>Distance:<span id='Distance'></span></td>
+            <td width='100'>Command:<span id='Command'></span></td>
+          </tr>
+        </table>
+      </div>
+
+      <div class='no-select'>
+        <div style='margin: 0 auto;' class='change_direction'>
+          <div class='direction_content'>
+            <div class='direction_div top_direction'>
+              <button id='F' class='button' ontouchstart='sendMotion()' ontouchend='sendStop()' onmousedown='sendMotion()' onmouseup='sendStop()'>F</button>
+            </div>
+            <div class='direction_div left_direction'>
+              <button id='L' class='button' ontouchstart='sendMotion()' ontouchend='sendStop()' onmousedown='sendMotion()' onmouseup='sendStop()'>L</button>
+            </div>
+            <div class='direction_div bottom_direction'>
+              <button id='B' class='button' ontouchstart='sendMotion()' ontouchend='sendStop()' onmousedown='sendMotion()' onmouseup='sendStop()'>B</button>
+            </div>
+            <div class='direction_div right_direction'>
+              <button id='R' class='button' ontouchstart='sendMotion()' ontouchend='sendStop()' onmousedown='sendMotion()' onmouseup='sendStop()'>R</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <table align='center' style='margin-bottom:50px;'>
+        <tr><td>
+              Move Certain Distance (m)
+              <form id='MCD' name='MCD' method='post' action='Motion'>
+                <input id='MCD' name='Motion/certain' type='text'>
+                <input id='MCD' name='submit' type='submit' style='width:70px;' value='Go'>
+              </form>
+        </td></tr>
+      </table>
+     
+      <table align='center'>
+        <tr><td>
+          <div style='float:left;margin-bottom:20px;'>
+            <div style='float:left;margin-left:50px;'>
+              Bala
+              <form id='1' name='1' method='post' action='Tuning'>
+                <input id='1' name='1' type='text'>
+                <input id='tuning' name='submit' type='submit' style='width:70px;' value=10.0000>
+              </form>
+            </div>
+            <div style='float:left;margin-left:50px;'>
+              Bala
+              <form id='1' name='1' method='post' action='Tuning'>
+                <input id='1' name='1' type='text'>
+                <input id='tuning' name='submit' type='submit' style='width:70px;' value=10.0000>
+              </form>
+            </div>
+          </div>
+        </td></tr>
+      </table>
+    
+      <table align='center'>
+        <tr><td>
+          <div style='float:left;margin-bottom:20px;'>
+            <div style='float:left;margin-left:50px;'>
+              Bala
+              <form id='1' name='1' method='post' action='Tuning'>
+                <input id='1' name='1' type='text'>
+                <input id='tuning' name='submit' type='submit' style='width:70px;' value=10.0000>
+              </form>
+            </div>
+            <div style='float:left;margin-left:50px;'>
+              Bala
+              <form id='1' name='1' method='post' action='Tuning'>
+                <input id='1' name='1' type='text'>
+                <input id='tuning' name='submit' type='submit' style='width:70px;' value=10.0000>
+              </form>
+            </div>
+          </div>
+        </td></tr>
+      </table>
+
+    </div>
+    
+    <script>
+      function onCheckboxClick(event){
+        event = event ? event : window.event;
+        var obj = event.srcElement ? event.srcElement : event.target;
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/Mode');
+        xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        if (document.getElementById(obj.id).checked==true){
+          xhr.send(obj.id+'=on');
+        } else {
+          xhr.send(obj.id+'=off');
+        }
+      }
+      function sendMotion(event){ 
+        event = event ? event : window.event;
+        var obj = event.srcElement ? event.srcElement : event.target;
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/Motion');
+        xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        xhr.send('Motion='+obj.id);
+      }
+      function sendStop(event){ 
+        event = event ? event : window.event;
+        event.preventDefault(); /*Prevent click event after touch event on mobile*/
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/Motion');
+        xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        xhr.send('Motion=S'); 
+      }
+      requestData(); 
+      setInterval(requestData, 100);
+      function requestData(){
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', '/Update');
+      xhr.onload = function(){
+        if (xhr.status === 200){
+          if (xhr.responseText){
+            var data = JSON.parse(xhr.responseText);
+            document.getElementById('Battery').innerText = data.Battery;
+            document.getElementById('Angle').innerText = data.Angle;
+            document.getElementById('SpeedL').innerText = data.SpeedL;
+            document.getElementById('SpeedR').innerText = data.SpeedR;
+            document.getElementById('Distance').innerText = data.Distance;
+            document.getElementById('Command').innerText = data.Command;
+          } else{
+            document.getElementById('Battery').innerText = '0.0000';
+            document.getElementById('Angle').innerText = '0.0000';
+            document.getElementById('SpeedL').innerText = '0.0000';
+            document.getElementById('SpeedR').innerText = '0.0000';
+            document.getElementById('Distance').innerText = '0.0000';
+            document.getElementById('Command').innerText = 'None';
+          }
+        } else{
+          document.getElementById('Battery').innerText = '0.0000';
+          document.getElementById('Angle').innerText = '0.0000';
+          document.getElementById('SpeedL').innerText = '0.0000';
+          document.getElementById('SpeedR').innerText = '0.0000';
+          document.getElementById('Distance').innerText = '0.0000';
+          document.getElementById('Command').innerText = 'None';
+        }
+      };
+      xhr.send();
+    }
+    </script>
+
+  </body>
+</html>

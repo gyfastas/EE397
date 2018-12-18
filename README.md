@@ -23,6 +23,7 @@ TODO
 #### ESP32
 - __Development platform__ : Arduino 1.8.4
 - __Supported repositories or libraries__ :
+    + [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer)
     + [M5Bala](https://github.com/m5stack/M5Bala)
     + [ESP32-Arduino-TB6612FNG](https://github.com/vincasmiliunas/ESP32-Arduino-TB6612FNG)
     + [KalmanFilter](https://github.com/TKJElectronics/KalmanFilter)
