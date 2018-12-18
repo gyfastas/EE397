@@ -9,14 +9,16 @@ This sub repository contains the source codes of Raspberry in our project.
 ### Hardware chips
 
 - __MCU(for visual)__ : Raspberry Pi 3
-- __Camera__ : Horned Sungem (HS) artificial intelligence development toolkit
+- __Camera__ : PiCamera
+- __Edge Computing Support__ : Intel Movidius Neural Compute Stick
 
 ### Software
 
 - __Python Version__ : Python 3.6
 - __Dependent Libraries__ :
-    + hsapi (APIs provided by the Development Kit of Horned Sungem)
     + opencv-python
+    + [ncsdk](https://github.com/movidius/ncsdk)
+    + [ncappzoo](https://github.com/movidius/ncappzoo)
 
 
 

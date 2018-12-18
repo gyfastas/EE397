@@ -39,8 +39,13 @@ This sub repository contains the source codes of ESP32 in our project.
 | Encoder    | MOTOR_L_A          | IO2          |
 | Encoder    | MOTOR_L_B          | IO0          |
 | Encoder    | MOTOR_R_A          | IO34         |
-| Encoder    | MOTOR_R_A          | IO35         |
-| HC-SR04    | TRIG               | IO25         |
-| HC-SR04    | ECHO               | IO39(VN)     |
+| Encoder    | MOTOR_R_B          | IO35         |
+| HC-SR04 (Front) | TRIG          | IO25         |
+| HC-SR04 (Front) | ECHO          | IO39(VN)     |
+| HC-SR04 (Left)  | TRIG          | IO33         |
+| HC-SR04 (Left)  | ECHO          | IO26         |
+| Battery Voltage Detection | OUT | IO36(VP)     |
+| UART (with Raspberry) | RX      | IO12         |
+| UART (with Raspberry) | TX      | IO14         |
 
 ![image](https://github.com/gyfastas/EE397/raw/master/MCU%20(ESP32)/images/ESP32-DEVKIT-V2-Board-Pinout-36-GPIOs.jpg)
